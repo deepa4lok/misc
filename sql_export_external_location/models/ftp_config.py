@@ -172,18 +172,6 @@ class FTPConfig(models.Model):
 
         return True
 
-    # @api.multi
-    # def automated_run(self):
-    #     configurations = self.search([])
-    #     if not configurations:
-    #         # cannot use local method because there is no record
-    #         _logger.exception("Cannot start automated_run. Need a valid configuration")
-    #         return False
-    #     else:
-    #         # start with previous end
-    #         # self = configurations[0]
-    #         return self.do_send()
-
     @api.multi
     def automated_run(self):
         configurations = self.search([])
@@ -192,9 +180,6 @@ class FTPConfig(models.Model):
                 config.do_send()
             except Exception, e:
                 _logger.exception("Cannot start automated_run. %s"%(e))
-
-
-
 
 
     @api.multi
