@@ -61,13 +61,20 @@ class FTPConfig(models.Model):
     #     self.write({})
     #     return True
 
+    @api.multi
+    def name_get(self):
+        return [(rec.id, "%s (%s)" % (rec.server, rec.user)) for rec in self]
 
-    def log_exception(self, msg, final_msg):
+
+    def log_exception(self, msg, final_msg, clear=False):
         for config in self:
             _logger.exception(final_msg)
             config.latest_run = datetime.datetime.utcnow().strftime('UTC %Y-%m-%d %H:%M:%S ')
-            config.latest_status = msg + final_msg
-            config.write({})
+            if clear:
+                config.latest_status = msg + final_msg
+            else:
+                config.latest_status += str('\n ') + msg + final_msg
+            # config.write({})
         return
 
     # def ship_file(self, msg, data, filename):
@@ -112,25 +119,29 @@ class FTPConfig(models.Model):
         for config in self:
             path = config.tempdir + "/"
 
-            # JSON
-            if isinstance(data, dict):
-                with open(path + filename, 'a') as f:
-                    json.dump(data, f)
-            else:
-                f = open(path + filename, "w")
-                f.write(data)
+            try:
+                # JSON
+                if isinstance(data, dict):
+                    with open(path + filename, 'a') as f:
+                        json.dump(data, f)
+                else:
+                    f = open(path + filename, "w")
+                    f.write(data)
+                f = None  # to force releasing the file handle
 
-            f = None  # to force releasing the file handle
+            except Exception, e:
+                config.log_exception(msg, "Invalid Directory, quiting...")
+                continue
+
 
             # Initiate File Transfer Connection
             try:
-
                 ftpServer = ftplib.FTP(config.server, config.user, config.password)
                 ftpServer.encoding = "utf-8"
 
             except Exception, e:
-                config.log_exception(msg, "Invalid FTP configuration")
-                continue
+                config.log_exception(msg, "Invalid FTP configuration, quiting...")
+                return False
 
             try:
                 _logger.info("Transferring " + filename)
@@ -144,12 +155,12 @@ class FTPConfig(models.Model):
                 ftpServer.cwd(target)
                 with open(source + filename, "rb") as file:
                     ftpServer.storbinary("STOR %s"%(filename), fp=file)
-
                 ftpServer.quit()
 
             except Exception, e:
-                config.log_exception(msg, "Transfer failed, quiting....")
-                continue
+                config.log_exception(msg, "Transfer failed, quiting....%s"%(e))
+                ftpServer.close()
+                return False
 
             ftpServer.close()
 
@@ -173,6 +184,7 @@ class FTPConfig(models.Model):
         cursor = self._cr
         msg = ""
         for config in self:
+            config.log_exception(msg, '', clear=True)
             if not config:
                 config.log_exception(msg, "No configuration found. <br>Please configure FTP connector.")
                 continue
@@ -192,6 +204,7 @@ class FTPConfig(models.Model):
                                    "Program not started. <br>Please create a valid record in SQL Export, & ensure it is in 'SQL Valid' state ")
                 continue
 
+            GoON = True
             OkFiles = ErrFiles = 0
             for idx, se in enumerate(sqlExports):
                 try:
@@ -203,32 +216,33 @@ class FTPConfig(models.Model):
                         res = cursor.fetchall()
                         res = res[0][0]
                         filename = str(se.id) + '_' + str(se.name) + '.xml'
-                        config.ship_file(msg, res, filename)
+                        GoON = config.ship_file(msg, res, filename)
+                        if not GoON: return False
 
                     elif config.output_type == 'csv':
                         wizRec = self.export_sql(sqlExport=se)
                         data = base64.decodestring(wizRec.binary_file)
-                        config.ship_file(msg, data, wizRec.file_name)
+                        GoON = config.ship_file(msg, data, wizRec.file_name)
+                        if not GoON: return False
 
                     else: # JSON
                         cursor.execute(se.query)
                         res = cursor.dictfetchall()
                         data = {'0': res}
                         filename = str(se.id) + '_' + str(se.name) + '.json'
-                        config.ship_file(msg, data, filename)
+                        GoON = config.ship_file(msg, data, filename)
+                        if not GoON: return False
 
                     OkFiles += 1
 
-                except:
+                except Exception, e:
                     ErrFiles += 1
-                    pass
+                    config.log_exception(msg, "Error executing SQL (%s) :: %s"%(se.name, e))
+                    continue
 
             # report and exit positively
             final_msg = "File(s) transferred: %s Success & %s Failed out of %s file(s)..."%(OkFiles, ErrFiles, idx+1 )
-            _logger.info(final_msg)
-            config.latest_run = datetime.datetime.utcnow().strftime('UTC %Y-%m-%d %H:%M:%S ')
-            config.latest_status = msg + final_msg
-            config.write({})
+            config.log_exception(msg, final_msg)
         return True
 
 
