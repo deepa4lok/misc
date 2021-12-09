@@ -24,8 +24,8 @@ class FTPConfig(models.Model):
     user = fields.Char(string='User')
     password = fields.Char(string='Password')
 
-    latest_run = fields.Char(string='Latest run', help="Date of latest run of Announcement connector")
-    latest_status = fields.Char(string='Latest status', help="Log of latest run")
+    latest_run = fields.Char(string='Latest run', help="Date of latest run of Announcement connector", copy=False)
+    latest_status = fields.Char(string='Latest status', help="Log of latest run", copy=False)
     output_type = fields.Selection([('csv','CSV'), ('xml', 'XML'), ('json','JSON')], string='Output File Format', default='csv')
 
     active = fields.Boolean(string='Active', default=True)
@@ -136,8 +136,10 @@ class FTPConfig(models.Model):
 
             # Initiate File Transfer Connection
             try:
-                ftpServer = ftplib.FTP(config.server, config.user, config.password)
-                ftpServer.encoding = "utf-8"
+                # ftpServer = ftplib.FTP(config.server, config.user, config.password)
+                # ftpServer.encoding = "utf-8"
+                port_session_factory = ftputil.session.session_factory(port=21, use_passive_mode=True)
+                ftpServer = ftputil.FTPHost(config.server, config.user, config.password, session_factory=port_session_factory)
 
             except Exception, e:
                 config.log_exception(msg, "Invalid FTP configuration, quiting...")
@@ -152,10 +154,14 @@ class FTPConfig(models.Model):
 
                 source = config.tempdir + '/'
 
-                ftpServer.cwd(target)
-                with open(source + filename, "rb") as file:
-                    ftpServer.storbinary("STOR %s"%(filename), fp=file)
-                ftpServer.quit()
+                # # ===========================
+                # ftpServer.cwd(target)
+                # with open(source + filename, "rb") as file:
+                #     ftpServer.storbinary("STOR %s"%(filename), fp=file)
+                # ftpServer.quit()
+                # # ============================
+
+                ftpServer.upload(source + filename, target + filename)
 
             except Exception, e:
                 config.log_exception(msg, "Transfer failed, quiting....%s"%(e))
@@ -166,17 +172,29 @@ class FTPConfig(models.Model):
 
         return True
 
+    # @api.multi
+    # def automated_run(self):
+    #     configurations = self.search([])
+    #     if not configurations:
+    #         # cannot use local method because there is no record
+    #         _logger.exception("Cannot start automated_run. Need a valid configuration")
+    #         return False
+    #     else:
+    #         # start with previous end
+    #         # self = configurations[0]
+    #         return self.do_send()
+
     @api.multi
     def automated_run(self):
         configurations = self.search([])
-        if not configurations:
-            # cannot use local method because there is no record
-            _logger.exception("Cannot start automated_run. Need a valid configuration")
-            return False
-        else:
-            # start with previous end
-            # self = configurations[0]
-            return self.do_send()
+        for config in configurations:
+            try:
+                config.do_send()
+            except Exception, e:
+                _logger.exception("Cannot start automated_run. %s"%(e))
+
+
+
 
 
     @api.multi
