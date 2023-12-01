@@ -10,7 +10,7 @@ _logger = getLogger(__name__)
 
 
 class PartnerFeed(models.Model):
-    _name = "partner.feed"
+    _inherit = ["partner.feed"]
 
 
     # Overridden:
