@@ -3,5 +3,24 @@
 <odoo>
 	<data>
 
+		<!--
+				Shopify: Connector Bridge
+		-->
+		<record id="shopify_instance_view_form_inherit" model="ir.ui.view">
+			<field name="name">multi.channel.sale.from.inherit</field>
+			<field name="model">multi.channel.sale</field>
+			<field name="inherit_id" ref="odoo_multi_channel_sale.multi_channel_view_form"/>
+			<field name="type">form</field>
+			<field name="arch" type="xml">
+				<xpath expr="//group[@name='basic_configuration']/group[2]" position="after">
+					<group name="misset_config">
+						<field name="company_id"  attrs="{'readonly':[('state','=', 'validate')]}"/>
+						<field name="customer_payment_mode_id"  attrs="{'readonly':[('state','=', 'validate')]}"/>
+						<field name="property_payment_term_id"  attrs="{'readonly':[('state','=', 'validate')]}"/>
+					</group>
+				</xpath>
+			</field>
+		</record>
+
 	</data>
 </odoo>
