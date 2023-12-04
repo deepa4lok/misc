@@ -18,6 +18,10 @@
 						<field name="customer_payment_mode_id"  attrs="{'readonly':[('state','=', 'validate')]}"/>
 						<field name="property_payment_term_id"  attrs="{'readonly':[('state','=', 'validate')]}"/>
 					</group>
+					<group name="misset_config2">
+						<field name="journal_id"  attrs="{'readonly':[('state','=', 'validate')]}"/>
+						<field name="operating_unit_id"  attrs="{'readonly':[('state','=', 'validate')]}"/>
+					</group>
 				</xpath>
 			</field>
 		</record>

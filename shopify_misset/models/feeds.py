@@ -98,3 +98,131 @@ class PartnerFeed(models.Model):
             update_id=update_id,
             message=message
         )
+
+
+    # Overridden:
+    @api.multi
+    def import_order(self,channel_id):
+        """ Update Journal & Operating Unit from Channel """
+
+        message = ""
+        update_id=None
+        create_id=None
+        self.ensure_one()
+        vals = EL(self.read(self.get_order_fields()))
+        store_id = vals.pop('store_id')
+
+        store_source = vals.pop('store_source')
+        match = channel_id.match_order_mappings(store_id)
+        state = 'done'
+        store_partner_id = vals.pop('partner_id')
+
+
+        date_info = self.get_order_date_info(channel_id,vals)
+        if date_info.get('date_order'):
+            vals['date_order']=date_info.get('date_order')
+        date_invoice =  date_info.get('date_invoice')
+        confirmation_date = date_info.get('confirmation_date')
+
+        if store_partner_id:
+            res_partner = self.get_order_partner_id(store_partner_id,channel_id)
+            message += res_partner.get('message', '')
+            partner_id = res_partner.get('partner_id')
+            partner_invoice_id = res_partner.get('partner_invoice_id')
+            partner_shipping_id = res_partner.get('partner_shipping_id')
+            if partner_id and partner_invoice_id and partner_shipping_id:
+                vals['partner_id'] = partner_id.id
+                vals['partner_invoice_id'] = partner_invoice_id.id
+                vals['partner_shipping_id'] = partner_shipping_id.id
+            else:
+                message += '<br/>Partner, Invoice, Shipping Address must present.'
+                state = 'error'
+                _logger.error('#OrderError1 %r'%message)
+        else:
+            message += '<br/>No partner in sale order data.'
+            state = 'error'
+            _logger.error('#OrderError2 %r'%message)
+
+
+        if state=='done':
+            carrier_id = vals.pop('carrier_id','')
+
+            if carrier_id:
+                carrier_res = self.get_carrier_id(carrier_id,channel_id=channel_id)
+                message += carrier_res.get('message')
+                carrier_id = carrier_res.get('carrier_id')
+                if carrier_id:
+                    vals['carrier_id'] = carrier_id.id
+            order_line_res = self._get_order_line_vals(vals,carrier_id,channel_id)
+            message += order_line_res.get('message', '')
+            if not order_line_res.get('status'):
+                state = 'error'
+                _logger.error('#OrderError3 %r'%order_line_res)
+            else:
+                order_line = order_line_res.get('order_line')
+                if len(order_line):
+                    vals['order_line'] = order_line
+                    state = 'done'
+        currency=self.currency
+
+        if state=='done' and currency:
+            currency_id = channel_id.get_currency_id(currency)
+            if not currency_id:
+                message += '<br/> Currency %s no active in Odoo'%(currency)
+                state = 'error'
+                _logger.error('#OrderError4 %r'%message)
+            else:
+                pricelist_id = channel_id.match_create_pricelist_id(currency_id)
+                vals['pricelist_id']=pricelist_id.id
+
+        vals.pop('name')
+        vals.pop('id')
+        vals.pop('website_message_ids','')
+        vals.pop('message_follower_ids','')
+        vals['team_id'] = channel_id.crm_team_id.id
+        vals['warehouse_id'] = channel_id.warehouse_id.id
+
+        # Journal & Operating Unit:
+        if channel_id.journal_id: vals['journal_id'] = channel_id.journal_id.id
+        if channel_id.operating_unit_id: vals['operating_unit_id'] = channel_id.operating_unit_id.id
+
+        if match and match.order_name:
+            if  state =='done' :
+                try:
+
+                    order_state = vals.pop('order_state')
+                    if match.order_name.state=='draft':
+                        match.order_name.write(dict(order_line=[(5,0)]))
+                        match.order_name.write(vals)
+                        message +='<br/> Order %s successfully updated'%(vals.get('name',''))
+                    else:
+                        message+='Only order state can be update as order not in draft state.'
+                    message += self.env['multi.channel.skeleton']._SetOdooOrderState(match.order_name, channel_id,
+                            order_state, self.payment_method,date_invoice=date_invoice,confirmation_date=confirmation_date)
+                except Exception as e:
+                    message += '<br/>%s' % (e)
+                    _logger.error('#OrderError5  %r'%message)
+                    state = 'error'
+                update_id = match
+            elif state =='error':
+                message+='<br/>Error while order update.'
+        else:
+            if state == 'done':
+                try:
+                    order_state = vals.pop('order_state')
+                    erp_id = self.env['sale.order'].create(vals)
+                    message += self.env['multi.channel.skeleton']._SetOdooOrderState(erp_id, channel_id,  order_state, self.payment_method,date_invoice=date_invoice,confirmation_date=confirmation_date)
+                    message  += '<br/> Order %s successfully evaluated'%(self.store_id)
+                    create_id =  channel_id.create_order_mapping(erp_id, store_id,store_source)
+
+                except Exception as e:
+                    message += '<br/>%s' % (e)
+                    _logger.error('#OrderError6 %r'%message)
+                    state = 'error'
+        self.set_feed_state(state=state)
+        self.message = "%s <br/> %s" % (self.message, message)
+        return dict(
+            create_id=create_id,
+            update_id=update_id,
+            message=message
+        )
