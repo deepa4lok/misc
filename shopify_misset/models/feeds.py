@@ -165,7 +165,7 @@ class OrderFeed(models.Model):
                 if len(order_line):
                     vals['order_line'] = order_line
                     state = 'done'
-        currency=self.currency
+        currency = self.currency
 
         if state=='done' and currency:
             currency_id = channel_id.get_currency_id(currency)
@@ -185,8 +185,8 @@ class OrderFeed(models.Model):
         vals['warehouse_id'] = channel_id.warehouse_id.id
 
         # Journal & Operating Unit:
-        if channel_id.journal_id: vals['journal_id'] = channel_id.journal_id.id
-        if channel_id.operating_unit_id: vals['operating_unit_id'] = channel_id.operating_unit_id.id
+        vals['journal_id'] = channel_id.journal_id.id or False
+        vals['operating_unit_id'] = channel_id.operating_unit_id.id or False
 
         if match and match.order_name:
             if  state =='done' :

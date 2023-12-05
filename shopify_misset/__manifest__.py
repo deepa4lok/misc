@@ -4,7 +4,7 @@
 {
     "name": "Shopify for Misset",
     "summary": "Shopify improvements for Misset",
-    "version": "10.0.3.2",
+    "version": "10.0.3.3",
     'category': 'Tools',
     'website' : "https://www.tosc.nl/",
     "author": "Deepa, " "The Open Source company (TOSC)",
