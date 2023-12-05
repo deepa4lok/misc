@@ -12,9 +12,9 @@
 			<field name="inherit_id" ref="sale.view_order_form"/>
 			<field name="type">form</field>
 			<field name="arch" type="xml">
-				<xpath expr="//field[@name='team_id']" position="attributes">
-                    <attribute name="on_change">0</attribute>
-                </xpath>
+<!--				<xpath expr="//field[@name='team_id']" position="attributes">-->
+<!--                    <attribute name="on_change">0</attribute>-->
+<!--                </xpath>-->
 				<xpath expr="//field[@name='invoice_status']" position="after">
                    <field name="journal_id"  groups="base.group_no_one"/>
                 </xpath>

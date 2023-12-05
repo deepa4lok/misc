@@ -26,3 +26,5 @@ class SaleOrder(models.Model):
         invoice_vals = super(SaleOrder, self)._prepare_invoice()
         invoice_vals['journal_id'] = self.journal_id.id
         return invoice_vals
+
+

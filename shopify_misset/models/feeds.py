@@ -99,6 +99,8 @@ class PartnerFeed(models.Model):
             message=message
         )
 
+class OrderFeed(models.Model):
+    _inherit = ["order.feed"]
 
     # Overridden:
     @api.multi
