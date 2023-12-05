@@ -17,6 +17,7 @@
     ],
     "data": [
         "views/multi_channel_sale.xml",
+        "views/sale_order.xml",
     ],
 }
 
