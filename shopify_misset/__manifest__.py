@@ -4,7 +4,7 @@
 {
     "name": "Shopify for Misset",
     "summary": "Shopify improvements for Misset",
-    "version": "10.0.3.3",
+    "version": "10.0.3.4",
     'category': 'Tools',
     'website' : "https://www.tosc.nl/",
     "author": "Deepa, " "The Open Source company (TOSC)",
@@ -13,7 +13,7 @@
         "shopify_odoo_bridge",
         "odoo_multi_channel_sale",
         "account_payment_partner", "account",
-        "sale", "sale_operating_unit",
+        "sale", "sale_operating_unit", "account_payment_sale",
     ],
     "data": [
         "views/multi_channel_sale.xml",

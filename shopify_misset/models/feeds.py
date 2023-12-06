@@ -46,10 +46,8 @@ class PartnerFeed(models.Model):
                 state = 'error'
 
         # Payment Term & Mode:
-        if channel_id.customer_payment_mode_id:
-            vals['customer_payment_mode_id'] = channel_id.customer_payment_mode_id.id
-        if channel_id.property_payment_term_id:
-            vals['property_payment_term_id'] = channel_id.property_payment_term_id.id
+        vals['customer_payment_mode_id'] = channel_id.customer_payment_mode_id and channel_id.customer_payment_mode_id.id or False
+        vals['property_payment_term_id'] = channel_id.property_payment_term_id and channel_id.property_payment_term_id.id or False
 
         if state == 'done':
             country_id = vals.pop('country_id')
@@ -144,6 +142,11 @@ class OrderFeed(models.Model):
             message += '<br/>No partner in sale order data.'
             state = 'error'
             _logger.error('#OrderError2 %r'%message)
+
+
+        # Update Payment Term & Payment Mode
+        vals['payment_term_id'] = partner_id.property_payment_term_id and partner_id.property_payment_term_id.id or False
+        vals['payment_mode_id'] = partner_id.customer_payment_mode_id and partner_id.customer_payment_mode_id.id or False
 
 
         if state=='done':
