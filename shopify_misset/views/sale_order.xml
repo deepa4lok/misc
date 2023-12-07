@@ -4,26 +4,6 @@
 	<data>
 
 		<!--
-				Sale: (Form)
-		-->
-<!--		<record id="view_order_form_inherit" model="ir.ui.view">-->
-<!--			<field name="name">sale.view_order_form.inherit</field>-->
-<!--			<field name="model">sale.order</field>-->
-<!--			<field name="inherit_id" ref="sale.view_order_form"/>-->
-<!--			<field name="type">form</field>-->
-<!--			<field name="arch" type="xml">-->
-<!--&lt;!&ndash;				<xpath expr="//field[@name='team_id']" position="attributes">&ndash;&gt;-->
-<!--&lt;!&ndash;                    <attribute name="on_change">0</attribute>&ndash;&gt;-->
-<!--&lt;!&ndash;                </xpath>&ndash;&gt;-->
-<!--				<xpath expr="//field[@name='invoice_status']" position="after">-->
-<!--                   <field name="journal_id"  groups="base.group_no_one"/>-->
-<!--                </xpath>-->
-<!--            </field>-->
-<!--        </record>-->
-
-
-
-		<!--
 				Sale: (sale_operating_unit)
 		-->
 		<record id="view_order_form_inherit2" model="ir.ui.view">
