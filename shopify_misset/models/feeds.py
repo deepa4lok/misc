@@ -20,15 +20,22 @@ class PartnerFeed(models.Model):
         message = ""
         state = 'done'
         update_id = None
-        create_id=None
+        create_id = None
         self.ensure_one()
         vals = EL(self.read(PartnerFields))
-        _type =vals.get('type')
+        _type = vals.get('type')
         store_id = vals.pop('store_id')
         vals.pop('website_message_ids','')
         vals.pop('message_follower_ids','')
         match = channel_id.match_partner_mappings(store_id,_type)
         name = vals.pop('name')
+
+        # Force update Company Name, if found.
+        company = vals.pop('company')
+        if company and self.type == 'contact':
+            name = company
+            vals['company_type'] = 'company'
+
         if not name:
             message+="<br/>Partner without name can't evaluated."
             state = 'error'
@@ -41,7 +48,7 @@ class PartnerFeed(models.Model):
             message += partner_res.get('message')
             partner_id = partner_res.get('partner_id')
             if partner_id:
-                vals['parent_id'] =partner_id.id
+                vals['parent_id'] = partner_id.id
             else:
                 state = 'error'
 
