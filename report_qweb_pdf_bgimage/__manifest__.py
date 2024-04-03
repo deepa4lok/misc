@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 {
-    "name": "Pdf Background Image",
+    "name": "Pdf Background Image [Deprecated]",
     "version": "14.0.3.1.0",
     "author": "Deepa, " "The Open Source company (TOSC)",
     "license": "AGPL-3",
