@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+
+    <!--
+        Layout (Background)
+    -->
+    <template id="external_layout_background_inherit" inherit_id="web.external_layout_background">
+        <xpath expr="//div[@t-attf-class='o_company_#{company.id}_layout header']" position="replace" />
+        <xpath expr="//div[@t-attf-class='o_company_#{company.id}_layout footer o_background_footer']" position="replace" />
+    </template>
+
+
+    <!--
+        Layout (Boxed)
+    -->
+    <template id="external_layout_boxed_inherit" inherit_id="web.external_layout_boxed">
+        <xpath expr="//div[@t-attf-class='header o_company_#{company.id}_layout']" position="replace" />
+        <xpath expr="//div[@t-attf-class='footer o_boxed_footer o_company_#{company.id}_layout']" position="replace" />
+    </template>
+
+
+    <!--
+        Layout (Clean)
+    -->
+    <template id="external_layout_clean_inherit" inherit_id="web.external_layout_clean">
+        <xpath expr="//div[@t-attf-class='header o_company_#{company.id}_layout']" position="replace" />
+        <xpath expr="//div[@t-attf-class='footer o_clean_footer o_company_#{company.id}_layout']" position="replace" />
+    </template>
+
+
+    <!--
+        Layout (Standard)
+    -->
+    <template id="external_layout_standard_inherit" inherit_id="web.external_layout_standard">
+        <xpath expr="//div[@t-attf-class='header o_company_#{company.id}_layout']" position="replace"/>
+        <xpath expr="//div[@t-attf-class='footer o_standard_footer o_company_#{company.id}_layout']" position="replace"/>
+    </template>
+
+
+</odoo>

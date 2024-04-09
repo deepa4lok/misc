@@ -31,7 +31,7 @@ class OperatingUnit(models.Model):
             open(os.path.join(tools.config['root_path'], 'addons', 'base', 'static', 'img', 'res_company_logo.png'),'rb').read())
 
     logo = fields.Binary(related='partner_id.image_1920', default=_get_logo)
-    report_background_image1 = fields.Binary('Background Image for Report Frontpage',
+    report_background_image1 = fields.Binary('Background Image for Report Frontpage', attachment=True,
             help='Set Background Image for Report Frontpage')
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

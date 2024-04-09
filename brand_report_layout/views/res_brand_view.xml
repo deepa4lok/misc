@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+
+    <!--
+            Brand (form): Inherited
+    -->
+    <record id="res_brand_form_view" model="ir.ui.view">
+        <field name="model">res.brand</field>
+        <field name="inherit_id" ref="brand.res_brand_form_view" />
+        <field name="arch" type="xml">
+            <xpath expr="//group[2]" position="after">
+                <group>
+                    <field name="background_image" />
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>
