@@ -22,7 +22,7 @@
     # Check https://github.com/odoo/odoo/blob/master/odoo/addons/base/module/module_data.xml
     # for the full list
     'category': 'accounts',
-    'version': '14.0.2',
+    'version': '14.0.2.1.0',
 
     # any module necessary for this one to work correctly
     'depends': ['base','web', 'operating_unit'],

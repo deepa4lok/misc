@@ -13,7 +13,7 @@
                 <notebook>
                     <page name="background" string="Background Image Configuration">
                         <group string="Background Image for Invoice">
-                            <field name="report_background_image1" widget="image" class="oe_avatar oe_left"/>
+                            <field name="report_background_image1" class="oe_avatar oe_left"/>
                         </group>
                     </page>
                 </notebook>
