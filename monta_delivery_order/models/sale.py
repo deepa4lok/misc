@@ -20,8 +20,8 @@ class Sale(models.Model):
         self.commitment_date = self.expected_date
 
     def action_confirm(self):
-        if (self.commitment_date and self.commitment_date.date() <= fields.Datetime.now().date())\
-                or not self.commitment_date:
+        if not self._context.get('send_email') and ((self.commitment_date and self.commitment_date.date() <= fields.Datetime.now().date())\
+                or not self.commitment_date):
             raise ValidationError(
                 _("Delivery date must be future date OR cannot be empty!")
             )
