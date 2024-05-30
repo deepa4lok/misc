@@ -2,6 +2,7 @@
 
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
+import datetime
 
 class Sale(models.Model):
     _inherit = 'sale.order'
@@ -18,11 +19,14 @@ class Sale(models.Model):
     @api.onchange('expected_date')
     def _onchange_expected_date(self):
         self.commitment_date = self.expected_date
+        if not self.commitment_date or (self.commitment_date and self.commitment_date.date() <= fields.Datetime.now().date()):
+            self.commitment_date = (fields.Datetime.now() + datetime.timedelta(days=1)).date()
 
     def action_confirm(self):
-        if not self._context.get('send_email') and ((self.commitment_date and self.commitment_date.date() <= fields.Datetime.now().date())\
-                or not self.commitment_date):
-            raise ValidationError(
-                _("Delivery date must be future date OR cannot be empty!")
-            )
+        if (self.commitment_date and self.commitment_date.date() <= fields.Datetime.now().date())\
+                or not self.commitment_date:
+            self.commitment_date = (fields.Datetime.now() + datetime.timedelta(days=1)).date()
+            # raise ValidationError(
+            #     _("Delivery date must be future date OR cannot be empty!")
+            # )
         return super().action_confirm()
