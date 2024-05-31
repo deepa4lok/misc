@@ -14,7 +14,7 @@
     'website' : "https://www.tosc.nl/",
     'license' : "LGPL-3", 
     'category': 'SQL Export',
-    'version' : '10.0',
+    'version' : '10.0.2',
     'depends' : ['sql_export'
                 ],
     'data'    : [
