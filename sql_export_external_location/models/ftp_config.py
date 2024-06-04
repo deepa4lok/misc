@@ -173,7 +173,7 @@ class FTPConfig(models.Model):
 
                     OkFiles += 1
 
-                except Exception:
+                except Exception as e:
                     ErrFiles += 1
                     config.log_exception(msg, "Error executing SQL (%s) :: %s"%(se.name, e))
                     continue
