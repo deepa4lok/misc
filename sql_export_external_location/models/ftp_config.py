@@ -1,16 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import datetime
-import ftputil
 import logging
+from ftplib import FTP_TLS
 from odoo import models, fields, api
 import base64
 import json
-
-try:
-    import ftputil.session
-except ImportError as e:
-    logging.error("ftputil.session could not be imported: %s", e)
+import os
 
 _logger = logging.getLogger(__name__)
 
@@ -51,6 +47,7 @@ class FTPConfig(models.Model):
     def ship_file(self, msg, data, filename):
         for config in self:
             path = config.tempdir + "/"
+
             try:
                 # Handle JSON data separately
                 if isinstance(data, dict):
@@ -65,11 +62,11 @@ class FTPConfig(models.Model):
                 config.log_exception(msg, f"Invalid Directory, quitting... {e}")
                 continue
 
-            # Initiate File Transfer Connection
+            # Initiate FTPS (FTP over TLS) Connection
             try:
-                port_session_factory = ftputil.session.session_factory(port=21, use_passive_mode=True)
-                ftpServer = ftputil.FTPHost(config.server, config.user, config.password,
-                                            session_factory=port_session_factory)
+                ftp_server = FTP_TLS(config.server)
+                ftp_server.login(config.user, config.password)
+                ftp_server.prot_p()  # Set up secure data connection
             except Exception as e:
                 config.log_exception(msg, f"Invalid FTP configuration, quitting... {e}")
                 return False
@@ -77,13 +74,21 @@ class FTPConfig(models.Model):
             try:
                 _logger.info("Transferring " + filename)
                 target = config.directory or '/'
-                source = config.tempdir + '/'
-                ftpServer.upload(source + filename, target + filename)
+                source = os.path.join(config.tempdir, filename)
+
+                # Change to target directory if specified
+                if target and target != '/':
+                    ftp_server.cwd(target)
+
+                with open(source, 'rb') as f:
+                    ftp_server.storbinary(f"STOR {filename}", f)
+
+                _logger.info("Transfer complete")
             except Exception as e:
                 config.log_exception(msg, f"Transfer failed, quitting.... {e}")
                 return False
             finally:
-                ftpServer.close()
+                ftp_server.quit()
 
         return True
 
@@ -175,13 +180,9 @@ class FTPConfig(models.Model):
             params=variable_dict, mode='stdout',
             copy_options=sqlExport.copy_options)
 
-        # Ensure res is a string before encoding
-        if isinstance(res, bytes):
-            res = res.decode(wiz.sql_export_id.encoding or 'utf-8')
-
-        # Now encode it
-        if wiz.sql_export_id.encoding:
-            res = res.encode(wiz.sql_export_id.encoding)
+        # If the result is already in bytes, we should not re-encode it.
+        if not isinstance(res, bytes):
+            res = res.encode(wiz.sql_export_id.encoding or 'utf-8')
 
         wiz.write({
             'binary_file': res,
