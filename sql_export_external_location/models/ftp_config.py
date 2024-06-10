@@ -26,7 +26,8 @@ class FTPConfig(models.Model):
     password = fields.Char(string='Password')
     latest_run = fields.Char(string='Latest run', help="Date of latest run of Announcement connector", copy=False)
     latest_status = fields.Char(string='Latest status', help="Log of latest run", copy=False)
-    output_type = fields.Selection([('csv', 'CSV'), ('xml', 'XML'), ('json', 'JSON')], string='Output File Format', default='csv')
+    output_type = fields.Selection([('csv', 'CSV'), ('xml', 'XML'), ('json', 'JSON')], string='Output File Format',
+                                   default='csv')
     active = fields.Boolean(string='Active', default=True)
     description = fields.Char(string='Description')
     sql_export_ids = fields.Many2many('sql.export', 'sql_export_ftp_rel', 'lead_id', 'sql_export_id',
@@ -65,7 +66,8 @@ class FTPConfig(models.Model):
             # Initiate File Transfer Connection
             try:
                 port_session_factory = ftputil.session.session_factory(port=21, use_passive_mode=True)
-                ftpServer = ftputil.FTPHost(config.server, config.user, config.password, session_factory=port_session_factory)
+                ftpServer = ftputil.FTPHost(config.server, config.user, config.password,
+                                            session_factory=port_session_factory)
             except Exception as e:
                 config.log_exception(msg, f"Invalid FTP configuration, quitting... {e}")
                 return False
@@ -170,6 +172,12 @@ class FTPConfig(models.Model):
         res = sqlExport._execute_sql_request(
             params=variable_dict, mode='stdout',
             copy_options=sqlExport.copy_options)
+
+        # Ensure res is a string before encoding
+        if isinstance(res, bytes):
+            res = res.decode(wiz.sql_export_id.encoding or 'utf-8')
+
+        # Now encode it
         if wiz.sql_export_id.encoding:
             res = res.encode(wiz.sql_export_id.encoding)
 
