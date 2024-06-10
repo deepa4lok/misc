@@ -52,12 +52,14 @@ class FTPConfig(models.Model):
         for config in self:
             path = config.tempdir + "/"
             try:
-                # JSON
+                # Handle JSON data separately
                 if isinstance(data, dict):
                     with open(path + filename, 'w') as f:
                         json.dump(data, f)
                 else:
-                    with open(path + filename, "w") as f:
+                    # Determine the mode based on the type of data
+                    mode = 'wb' if isinstance(data, bytes) else 'w'
+                    with open(path + filename, mode) as f:
                         f.write(data)
             except Exception as e:
                 config.log_exception(msg, f"Invalid Directory, quitting... {e}")
