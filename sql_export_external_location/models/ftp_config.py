@@ -159,7 +159,7 @@ class FTPConfig(models.Model):
 
                     elif config.output_type == 'csv':
                         wizRec = self.export_sql(sqlExport=se)
-                        data = base64.decodestring(wizRec.binary_file)
+                        data = base64.decodebytes(wizRec.binary_file)
                         GoON = config.ship_file(msg, data, wizRec.file_name)
                         if not GoON: return False
 
