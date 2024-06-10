@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import datetime
 import logging
 import paramiko
@@ -56,9 +54,15 @@ class FTPConfig(models.Model):
                     mode = 'wb' if isinstance(data, bytes) else 'w'
                     with open(path + filename, mode) as f:
                         f.write(data)
+                _logger.info(f"File {path + filename} created successfully.")
             except Exception as e:
                 config.log_exception(msg, f"Invalid Directory, quitting... {e}")
                 continue
+
+            # Check if the file exists before attempting to transfer
+            if not os.path.exists(path + filename):
+                config.log_exception(msg, f"The file {path + filename} does not exist, quitting...")
+                return False
 
             # Initiate SFTP Connection
             try:
