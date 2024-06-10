@@ -2,7 +2,7 @@
 
 import datetime
 import logging
-from ftplib import FTP_TLS
+import paramiko
 from odoo import models, fields, api
 import base64
 import json
@@ -10,20 +10,18 @@ import os
 
 _logger = logging.getLogger(__name__)
 
-
 class FTPConfig(models.Model):
     _name = 'ftp.config'
     _description = 'Connection info of FTP Transfers'
 
-    server = fields.Char(string='Server', help="Servername, including protocol, e.g. https://prod.barneveldsekrant.nl")
+    server = fields.Char(string='Server', help="Servername, including protocol, e.g. sftp://prod.barneveldsekrant.nl")
     directory = fields.Char(string='Server subdir', help="Directory starting with slash, e.g. /api/v1, or empty")
     tempdir = fields.Char(string='Local temp dir', help="Local temporary directory. e.g. /home/odoo")
     user = fields.Char(string='User')
     password = fields.Char(string='Password')
     latest_run = fields.Char(string='Latest run', help="Date of latest run of Announcement connector", copy=False)
     latest_status = fields.Char(string='Latest status', help="Log of latest run", copy=False)
-    output_type = fields.Selection([('csv', 'CSV'), ('xml', 'XML'), ('json', 'JSON')], string='Output File Format',
-                                   default='csv')
+    output_type = fields.Selection([('csv', 'CSV'), ('xml', 'XML'), ('json', 'JSON')], string='Output File Format', default='csv')
     active = fields.Boolean(string='Active', default=True)
     description = fields.Char(string='Description')
     sql_export_ids = fields.Many2many('sql.export', 'sql_export_ftp_rel', 'lead_id', 'sql_export_id',
@@ -62,11 +60,11 @@ class FTPConfig(models.Model):
                 config.log_exception(msg, f"Invalid Directory, quitting... {e}")
                 continue
 
-            # Initiate FTPS (FTP over TLS) Connection
+            # Initiate SFTP Connection
             try:
-                ftp_server = FTP_TLS(config.server)
-                ftp_server.login(config.user, config.password)
-                ftp_server.prot_p()  # Set up secure data connection
+                transport = paramiko.Transport((config.server, 22))
+                transport.connect(username=config.user, password=config.password)
+                sftp = paramiko.SFTPClient.from_transport(transport)
             except Exception as e:
                 config.log_exception(msg, f"Invalid FTP configuration, quitting... {e}")
                 return False
@@ -76,19 +74,21 @@ class FTPConfig(models.Model):
                 target = config.directory or '/'
                 source = os.path.join(config.tempdir, filename)
 
-                # Change to target directory if specified
-                if target and target != '/':
-                    ftp_server.cwd(target)
+                # Ensure the target directory exists, create if not
+                try:
+                    sftp.chdir(target)
+                except IOError:
+                    sftp.mkdir(target)
+                    sftp.chdir(target)
 
-                with open(source, 'rb') as f:
-                    ftp_server.storbinary(f"STOR {filename}", f)
-
+                sftp.put(source, os.path.join(target, filename))
                 _logger.info("Transfer complete")
             except Exception as e:
                 config.log_exception(msg, f"Transfer failed, quitting.... {e}")
                 return False
             finally:
-                ftp_server.quit()
+                sftp.close()
+                transport.close()
 
         return True
 
@@ -178,14 +178,14 @@ class FTPConfig(models.Model):
 
         res = sqlExport._execute_sql_request(
             params=variable_dict, mode='stdout',
-            copy_options=sqlExport.copy_options)
+            copy_options=sqlExport.copy_options
+        )
 
-        # If the result is already in bytes, we should not re-encode it.
         if not isinstance(res, bytes):
             res = res.encode(wiz.sql_export_id.encoding or 'utf-8')
 
         wiz.write({
             'binary_file': res,
-            'file_name': sqlExport.name + '.csv'
+            'file_name': f"{sqlExport.name}.csv"
         })
         return wiz
