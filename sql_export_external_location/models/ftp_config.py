@@ -5,6 +5,7 @@ from odoo import models, fields, api
 import base64
 import json
 import os
+import time
 
 _logger = logging.getLogger(__name__)
 
@@ -59,19 +60,26 @@ class FTPConfig(models.Model):
                 config.log_exception(msg, f"Invalid Directory, quitting... {e}")
                 continue
 
-            # Check if the file exists before attempting to transfer
+            # Check if the file exists before attempting to upload
             if not os.path.exists(path + filename):
                 config.log_exception(msg, f"The file {path + filename} does not exist, quitting...")
                 return False
 
-            # Initiate SFTP Connection
-            try:
-                transport = paramiko.Transport((config.server, 22))
-                transport.connect(username=config.user, password=config.password)
-                sftp = paramiko.SFTPClient.from_transport(transport)
-            except Exception as e:
-                config.log_exception(msg, f"Invalid FTP configuration, quitting... {e}")
-                return False
+            # Initiate SFTP Connection with retries
+            retries = 3
+            for attempt in range(retries):
+                try:
+                    transport = paramiko.Transport((config.server, 22))
+                    transport.connect(username=config.user, password=config.password)
+                    sftp = paramiko.SFTPClient.from_transport(transport)
+                    break
+                except Exception as e:
+                    if attempt < retries - 1:
+                        _logger.warning(f"Attempt {attempt + 1} failed: {e}. Retrying...")
+                        time.sleep(5)  # Wait for 5 seconds before retrying
+                    else:
+                        config.log_exception(msg, f"Invalid FTP configuration, quitting... {e}")
+                        return False
 
             try:
                 _logger.info("Transferring " + filename)
