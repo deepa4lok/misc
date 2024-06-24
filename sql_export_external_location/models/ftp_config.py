@@ -67,16 +67,19 @@ class FTPConfig(models.Model):
 
             # Initiate SFTP Connection with retries
             retries = 3
+            backoff_factor = 5  # Exponential backoff factor
             for attempt in range(retries):
                 try:
                     transport = paramiko.Transport((config.server, 22))
+                    transport.banner_timeout = 30  # Increase the banner timeout
                     transport.connect(username=config.user, password=config.password)
                     sftp = paramiko.SFTPClient.from_transport(transport)
                     break
                 except Exception as e:
                     if attempt < retries - 1:
-                        _logger.warning(f"Attempt {attempt + 1} failed: {e}. Retrying...")
-                        time.sleep(5)  # Wait for 5 seconds before retrying
+                        _logger.warning(f"Attempt {attempt + 1} failed: {e}. Retrying in {backoff_factor} seconds...")
+                        time.sleep(backoff_factor)
+                        backoff_factor *= 2  # Exponential backoff
                     else:
                         config.log_exception(msg, f"Invalid FTP configuration, quitting... {e}")
                         return False
