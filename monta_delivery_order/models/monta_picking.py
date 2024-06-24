@@ -451,10 +451,12 @@ class MontaInboundtoOdooMove(models.Model):
         inboundMoveData = {}
         stockMove = self.env['stock.move']
         if response.status_code == 200:
+            monta_inbound_ids = []
             response_data = json.loads(response.text)
             for dt in response_data:
                 try:
                     inboundID = dt['Id']
+                    monta_inbound_ids.append(int(inboundID))
                     sku = dt['Sku']
                     inboundRef = dt['InboundForecastReference']
                     inboundQty = dt['Quantity']
@@ -474,10 +476,16 @@ class MontaInboundtoOdooMove(models.Model):
                     _logger.info(
                         "\nError: Monta Inbound scheduler %s,\n" % (e)
                     )
+            if response_data:
+                new_inbound_id = False
+                inboundIds = [int(id) for id in self.search([]).filtered(lambda l: l.inbound_id).mapped('inbound_id')]
+                if inboundIds:
+                    new_inbound_id = max(inboundIds)
+                elif monta_inbound_ids:
+                    new_inbound_id = max(monta_inbound_ids)
+                if new_inbound_id:
+                    config.write({'inbound_id':new_inbound_id})
 
-        inboundIds = [int(id) for id in self.search([]).filtered(lambda l: l.inbound_id).mapped('inbound_id')]
-        inbound_id = max(inboundIds) if inboundIds else False
-        config.write({'inbound_id':inbound_id})
-        if inboundMoveData:
-            # stockMove.mapped('move_line_ids').unlink()
-            self.validate_picking_from_monta_qty(inboundMoveData=inboundMoveData)
+                if inboundMoveData:
+                    # stockMove.mapped('move_line_ids').unlink()
+                    self.validate_picking_from_monta_qty(inboundMoveData=inboundMoveData)
