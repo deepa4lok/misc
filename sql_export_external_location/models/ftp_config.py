@@ -71,7 +71,7 @@ class FTPConfig(models.Model):
             for attempt in range(retries):
                 try:
                     transport = paramiko.Transport((config.server, 22))
-                    transport.banner_timeout = 60  # Increase the banner timeout
+                    transport.banner_timeout = 120  # Increase the banner timeout
                     transport.connect(username=config.user, password=config.password)
                     sftp = paramiko.SFTPClient.from_transport(transport)
                     break
