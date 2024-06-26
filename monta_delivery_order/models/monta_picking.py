@@ -455,7 +455,7 @@ class MontaInboundtoOdooMove(models.Model):
             response_data = json.loads(response.text)
             for dt in response_data:
                 # try:
-                if Ture:
+                if True:
                     inboundID = dt['Id']
                     monta_inbound_ids.append(int(inboundID))
                     sku = dt['Sku']
