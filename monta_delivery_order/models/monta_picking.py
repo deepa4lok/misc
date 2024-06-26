@@ -222,7 +222,6 @@ class PickingfromOdootoMonta(models.Model):
     def convert_TZ_UTC(self, TZ_datetime):
         shipped_date = datetime.strptime(TZ_datetime, '%Y-%m-%dT%H:%M:%S.%f').strftime('%Y-%m-%d %H:%M:%S')
         shipped_date = datetime.strptime(shipped_date, '%Y-%m-%d %H:%M:%S')
-        import pdb;pdb.set_trace();
         tz_name = self.env.context.get('tz') or self.env.user.tz
         if not tz_name:
             _logger.info(
