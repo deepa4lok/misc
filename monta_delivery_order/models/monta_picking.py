@@ -224,6 +224,10 @@ class PickingfromOdootoMonta(models.Model):
         shipped_date = datetime.strptime(shipped_date, '%Y-%m-%d %H:%M:%S')
         import pdb;pdb.set_trace();
         tz_name = self.env.context.get('tz') or self.env.user.tz
+        if not tz_name:
+            _logger.info(
+                "\nError: Monta scheduler! Timezone missing for user %s(Id=%s)!\n," % (self.env.user.name, self.env.user.id)
+            )
         user_tz = pytz.timezone(tz_name)
         utc = pytz.utc
         dt = user_tz.localize(shipped_date).astimezone(utc).strftime('%Y-%m-%d %H:%M:%S')
