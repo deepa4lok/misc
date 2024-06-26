@@ -222,6 +222,7 @@ class PickingfromOdootoMonta(models.Model):
     def convert_TZ_UTC(self, TZ_datetime):
         shipped_date = datetime.strptime(TZ_datetime, '%Y-%m-%dT%H:%M:%S.%f').strftime('%Y-%m-%d %H:%M:%S')
         shipped_date = datetime.strptime(shipped_date, '%Y-%m-%d %H:%M:%S')
+        import pdb;pdb.set_trace();
         tz_name = self.env.context.get('tz') or self.env.user.tz
         if not tz_name:
             _logger.info(
@@ -458,7 +459,8 @@ class MontaInboundtoOdooMove(models.Model):
             monta_inbound_ids = []
             response_data = json.loads(response.text)
             for dt in response_data:
-                try:
+                # try:
+                if True:
                     inboundID = dt['Id']
                     monta_inbound_ids.append(int(inboundID))
                     sku = dt['Sku']
@@ -476,10 +478,10 @@ class MontaInboundtoOdooMove(models.Model):
                         newObj = self.create(inbound_data)
                         stockMove |= odoo_inbound_obj.move_id
                         inboundMoveData[newObj]=[odoo_inbound_obj.move_id, inboundQty, batch_ref]
-                except Exception as e:
-                    _logger.info(
-                        "\nError: Monta Inbound scheduler %s,\n" % (e)
-                    )
+                # except Exception as e:
+                #     _logger.info(
+                #         "\nError: Monta Inbound scheduler %s,\n" % (e)
+                #     )
             if response_data:
                 new_inbound_id = False
                 inboundIds = [int(id) for id in self.search([]).filtered(lambda l: l.inbound_id).mapped('inbound_id')]
