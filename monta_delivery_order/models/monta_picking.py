@@ -458,8 +458,7 @@ class MontaInboundtoOdooMove(models.Model):
             monta_inbound_ids = []
             response_data = json.loads(response.text)
             for dt in response_data:
-                # try:
-                if True:
+                try:
                     inboundID = dt['Id']
                     monta_inbound_ids.append(int(inboundID))
                     sku = dt['Sku']
@@ -469,6 +468,9 @@ class MontaInboundtoOdooMove(models.Model):
                     odoo_inbound_obj = self.env['stock.move.from.odooto.monta'].search(
                         [('product_id.default_code', '=', sku), ('monta_move_id.monta_order_name', '=', inboundRef)])
                     if odoo_inbound_obj:
+                        if odoo_inbound_obj.monta_inbound_line_ids.filtered(lambda rec: rec.inbound_id == str(inboundID)):
+                            continue
+
                         inbound_data = {'monta_move_line_id': odoo_inbound_obj.id,'inbound_id': inboundID, 'inbound_quantity': inboundQty}
                         batch_ref = False
                         if dt.get('Batch', False):
@@ -477,10 +479,10 @@ class MontaInboundtoOdooMove(models.Model):
                         newObj = self.create(inbound_data)
                         stockMove |= odoo_inbound_obj.move_id
                         inboundMoveData[newObj]=[odoo_inbound_obj.move_id, inboundQty, batch_ref]
-                # except Exception as e:
-                #     _logger.info(
-                #         "\nError: Monta Inbound scheduler %s,\n" % (e)
-                #     )
+                except Exception as e:
+                    _logger.info(
+                        "\nError: Monta Inbound scheduler %s,\n" % (e)
+                    )
             if response_data:
                 new_inbound_id = False
                 inboundIds = [int(id) for id in self.search([]).filtered(lambda l: l.inbound_id).mapped('inbound_id')]
