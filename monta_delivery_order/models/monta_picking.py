@@ -33,7 +33,13 @@ class PickingfromOdootoMonta(models.Model):
     @api.depends('picking_id')
     def _compute_order_name(self):
         for pick in self:
-            pick.monta_order_name = pick.picking_id.name.replace('/', '')
+            name = ''
+            name += pick.picking_id.name.replace('/', '')
+            if pick.sale_id:
+                name = pick.sale_id.name +' ' + name
+            if pick.purchase_id:
+                name = pick.purchase_id.name +' ' + name
+            pick.monta_order_name = name
 
     picking_id = fields.Many2one('stock.picking', required=True)
     picking_type_code = fields.Selection(related='picking_id.picking_type_code')
