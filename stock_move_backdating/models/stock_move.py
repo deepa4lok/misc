@@ -29,7 +29,7 @@ class StockMove(models.Model):
             self.env["decimal.precision"].precision_get("Product Price")
             line = self.purchase_line_id
             order = line.order_id
-            price_unit = line._prepare_compute_all_values()["price_unit"]
+            price_unit = line.price_unit
             if order.currency_id != order.company_id.currency_id:
                 price_unit = order.currency_id._convert(
                     price_unit,
