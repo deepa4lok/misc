@@ -72,7 +72,7 @@ class PickingfromOdootoMonta(models.Model):
 
         # GET inboundforecast/group/
         if 'api-v6.monta.nl' in method:
-            url = "https://api-v6.monta.nl"
+            url = "https://api-v6.monta.nl/"
             method = method.split(url)[1]
         elif '/batches' in method :#only for outbound batches
             url = "https://api-v6.monta.nl"
@@ -250,12 +250,20 @@ class PickingfromOdootoMonta(models.Model):
             try:
                 orderNum = obj.monta_order_name
                 response = self.call_monta_interface("GET", method%orderNum)
-                response_order_info = self.call_monta_interface("GET", "order/%s"%orderNum)
+                response_order_info = self.call_monta_interface("GET", "https://api-v6.monta.nl/order/%s"%orderNum)
+                track_dic = {}
                 if response.status_code == 200:
                     shipped_date = False
                     if response_order_info.status_code == 200:
                         response_order_info_data = json.loads(response_order_info.text)
-                        shipped_date = self.convert_TZ_UTC(response_order_info_data['Shipped'])
+                        shipped_date = response_order_info_data['Shipped']
+                        shipped_date = self.convert_TZ_UTC(shipped_date) if shipped_date else shipped_date
+                        if obj.picking_id.sale_id:
+                            track_dic['Shipped'] = response_order_info_data['Shipped']
+                            track_dic['TrackAndTraceLink'] = response_order_info_data['TrackAndTraceLink']
+                            track_dic['TrackAndTraceCode'] = response_order_info_data['TrackAndTraceCode']
+                            track_dic['ShipperDescription'] = response_order_info_data['ShipperDescription']
+                            track_dic['PackingServices'] = response_order_info_data['PackingServices']
                     response_data = json.loads(response.text)
                     for line in response_data.get('BatchLines', []):
                         sku = line['Sku']
@@ -280,6 +288,18 @@ class PickingfromOdootoMonta(models.Model):
                                 outboundMoveData[(move_obj, batch_ref)] +=  qty
                             else:
                                 outboundMoveData[(move_obj, batch_ref)] = qty
+                if obj.picking_id.sale_id and track_dic:
+                    track_data = json.dumps(track_dic)
+                    body = _('Tracking Info:\n %s', track_data[1:-1])
+                    obj.picking_id.sale_id.message_post(body=body)
+                    obj.picking_id.\
+                        write({'carrier_tracking_url':track_dic['TrackAndTraceLink'],
+                               'carrier_tracking_ref':track_dic['TrackAndTraceCode']})
+                    mail_template = self.env.ref('monta_delivery_order.mail_template_delivery_tracking',
+                                                        raise_if_not_found=False)
+                    if mail_template.active:
+                        mail_template.send_mail(obj.picking_id.id)
+
             except Exception as e:
                 _logger.info(
                     "\nError: Monta Outbound scheduler %s\n,"%(e)
