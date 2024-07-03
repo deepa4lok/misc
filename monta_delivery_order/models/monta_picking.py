@@ -295,10 +295,10 @@ class PickingfromOdootoMonta(models.Model):
                     obj.picking_id.\
                         write({'carrier_tracking_url':track_dic['TrackAndTraceLink'],
                                'carrier_tracking_ref':track_dic['TrackAndTraceCode']})
-                    mail_template = self.env.ref('monta_delivery_order.mail_template_delivery_tracking',
-                                                        raise_if_not_found=False)
-                    if mail_template.active:
-                        mail_template.send_mail(obj.picking_id.id)
+                    # mail_template = self.env.ref('monta_delivery_order.mail_template_delivery_tracking',
+                    #                                     raise_if_not_found=False)
+                    # if mail_template.active:
+                    #     mail_template.send_mail(obj.picking_id.id)
 
             except Exception as e:
                 _logger.info(
