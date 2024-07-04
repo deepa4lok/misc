@@ -8,6 +8,7 @@ class Picking(models.Model):
     monta_log_id = fields.Many2one('picking.from.odooto.monta', copy=False)
     response_code = fields.Integer(related="monta_log_id.monta_response_code", string='Response Code')
     response_message = fields.Text(related="monta_log_id.monta_response_message", string='Response Message')
+    monta_carrier_tracking_url = fields.Char(string='Monta Tracking URL')
 
     def transfer_picking_to_monta(self):
         monta_picking_obj = self.env['picking.from.odooto.monta']

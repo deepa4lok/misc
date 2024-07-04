@@ -183,12 +183,59 @@ class PickingfromOdootoMonta(models.Model):
                 "OrderedQuantity": int(line.ordered_quantity)
             })
 
-        if self.sale_id.carrier_id:
+        sale_obj = self.sale_id
+        if sale_obj.carrier_id:
             delivery_method = self.sale_id.carrier_id
             payload['AllowedShippers'].append(
                 delivery_method.monta_shipper_code
             )
 
+        payload['Invoice'] = {
+            "PaymentMethodDescription": "",
+            "AmountInclTax":sale_obj.amount_total,
+            "TotalTax": sale_obj.amount_tax,
+            "Paid": False,
+            "WebshopFactuurID": sale_obj.name,
+            "Currency": sale_obj.currency_id.symbol,
+            "Lines":[],
+        }
+        invoice_lines = []
+        for sol in sale_obj.order_line:
+            tax_obj = sol.tax_id[0] if sol.tax_id else self.env['account.tax']
+            sol_item = {
+                "Quantity": sol.product_uom_qty,
+                "TaxPercentage": tax_obj.amount,
+                "TaxAmount": sol.price_tax,
+                "TaxDescription": tax_obj.name,
+                "AmountInclTax": sol.price_total,
+                "AmountExclTax": sol.price_subtotal,
+                "Discount": False,
+                "PaymentCosts": False,
+                "ShippingCost": False,
+                "Description": sol.name,
+            }
+
+            if sol.product_id.type == 'service':
+                #discount line
+                if sol.price_total < 0:
+                    sol_item.update({
+                        "Discount": True,
+                   })
+                #shipping line
+                elif sol.product_id.id == sale_obj.carrier_id.product_id.id:
+                    sol_item.update({
+                        "ShippingCost": True,
+                    })
+            else:
+                sol_item.update({
+                    "ItemPriceInclTax": sol.price_total,
+                    "ItemPriceExclTax": sol.price_subtotal,
+                    "Sku": sol.product_id.default_code,
+                    "Reference": sol.product_id.id
+                })
+
+            invoice_lines.append(sol_item)
+        payload['Invoice']['Lines'] = invoice_lines
         payload = json.dumps(payload)
         self.write({"json_payload": payload})
         if not button_action:
@@ -293,7 +340,7 @@ class PickingfromOdootoMonta(models.Model):
                     body = _('Tracking Info:\n %s', track_data[1:-1])
                     obj.picking_id.sale_id.message_post(body=body)
                     obj.picking_id.\
-                        write({'carrier_tracking_url':track_dic['TrackAndTraceLink'],
+                        write({'monta_carrier_tracking_url':track_dic['TrackAndTraceLink'],
                                'carrier_tracking_ref':track_dic['TrackAndTraceCode']})
                     # mail_template = self.env.ref('monta_delivery_order.mail_template_delivery_tracking',
                     #                                     raise_if_not_found=False)
