@@ -16,7 +16,7 @@
     # Check https://github.com/odoo/odoo/blob/10.0/odoo/addons/base/module/module_data.xml
     # for the full list
     'category': 'Stock',
-    'version': '16.0.0.3',
+    'version': '16.0.0.4',
 
     # any module necessary for this one to work correctly
     'depends': ['sale_stock', 'partner_firstname', 'purchase_stock', 'base_address_extended',
@@ -26,7 +26,7 @@
     'data': [
         'security/ir.model.access.csv',
         'data/cron_data.xml',
-        'data/mail_template_data.xml',
+        # 'data/mail_template_data.xml',
         'wizard/monta_product_stock_wizard_view.xml',
         'views/monta_config_view.xml',
         'views/monta_picking_view.xml',
