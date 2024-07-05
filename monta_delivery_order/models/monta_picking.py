@@ -195,7 +195,7 @@ class PickingfromOdootoMonta(models.Model):
             "AmountInclTax":sale_obj.amount_total,
             "TotalTax": sale_obj.amount_tax,
             "Paid": False,
-            "WebshopFactuurID": sale_obj.id,
+            "WebshopFactuurID": sale_obj.name[1:],
             "Currency": sale_obj.currency_id.name,
             "Lines":[],
         }
@@ -231,7 +231,7 @@ class PickingfromOdootoMonta(models.Model):
                     "ItemPriceInclTax": sol.price_total,
                     "ItemPriceExclTax": sol.price_subtotal,
                     "Sku": sol.product_id.default_code,
-                    "Reference": sol.product_id.id
+                    "Reference": sol.product_id.name
                 })
 
             invoice_lines.append(sol_item)
