@@ -195,8 +195,8 @@ class PickingfromOdootoMonta(models.Model):
             "AmountInclTax":sale_obj.amount_total,
             "TotalTax": sale_obj.amount_tax,
             "Paid": False,
-            "WebshopFactuurID": sale_obj.name,
-            "Currency": sale_obj.currency_id.symbol,
+            "WebshopFactuurID": sale_obj.id,
+            "Currency": sale_obj.currency_id.name,
             "Lines":[],
         }
         invoice_lines = []
