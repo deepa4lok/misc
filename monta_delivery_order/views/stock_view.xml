@@ -12,6 +12,7 @@
                         <field name="monta_log_id" readonly="True"/>
                         <field name="response_code"/>
                         <field name="response_message"/>
+                        <field name="monta_carrier_tracking_url" readonly="True"/>
                     </group>
                 </page>
             </xpath>

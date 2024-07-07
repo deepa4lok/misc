@@ -26,7 +26,7 @@
     'data': [
         'security/ir.model.access.csv',
         'data/cron_data.xml',
-        # 'data/mail_template_data.xml',
+        'data/mail_template_data.xml',
         'wizard/monta_product_stock_wizard_view.xml',
         'views/monta_config_view.xml',
         'views/monta_picking_view.xml',
