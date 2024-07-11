@@ -1,0 +1,50 @@
+<odoo>
+    <!-- Form view for Helpdesk SLA -->
+    <record id="view_helpdesk_sla_form" model="ir.ui.view">
+        <field name="name">helpdesk.sla.form</field>
+        <field name="model">helpdesk.sla</field>
+        <field name="arch" type="xml">
+            <form string="Helpdesk SLA">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="team_ids" widget="many2many_tags"/>
+                        <field name="sla_line_ids">
+                            <tree string="SLA Lines">
+                                <field name="name"/>
+                                <field name="priority"/>
+                                <field name="response_time_hours"/>
+                                <field name="resolution_time_hours"/>
+                                <field name="next_working_day"/>
+                            </tree>
+                        </field>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Tree view for Helpdesk SLA -->
+    <record id="view_helpdesk_sla_tree" model="ir.ui.view">
+        <field name="name">helpdesk.sla.tree</field>
+        <field name="model">helpdesk.sla</field>
+        <field name="arch" type="xml">
+            <tree string="Helpdesk SLA">
+                <field name="name"/>
+                <field name="team_ids"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Action for Helpdesk SLA -->
+    <record id="action_helpdesk_sla" model="ir.actions.act_window">
+        <field name="name">Helpdesk SLA</field>
+        <field name="res_model">helpdesk.sla</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Menu item for Helpdesk SLA -->
+    <menuitem id="menu_helpdesk_sla" name="Helpdesk SLA"
+              parent="helpdesk.menu_helpdesk_configuration" action="action_helpdesk_sla"
+              groups="helpdesk.group_helpdesk_manager"/>
+</odoo>
