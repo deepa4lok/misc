@@ -5,12 +5,12 @@
         <field name="model">helpdesk.ticket</field>
         <field name="inherit_id" ref="helpdesk_mgmt.ticket_view_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//group[@name='description']" position="before">
+            <xpath expr="//field[@name='category_id']" position="after">
                 <group name="priority">
                     <field name="priority"/>
                 </group>
             </xpath>
-            <xpath expr="//group[@name='sla']" position="inside">
+            <xpath expr="//group[@name='other_info']" position="inside">
                 <group>
                     <field name="response_time_overdue"/>
                     <field name="resolution_time_overdue"/>
