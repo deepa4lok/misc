@@ -5,7 +5,7 @@
     'description': 'This module adds a priority field to helpdesk tickets and provides a way to manage SLAs.',
     'author': 'The Open Source Company',
     'category': 'Helpdesk',
-    'depends': ['helpdesk'],
+    'depends': ['helpdesk_mgmt'],
     'data': [
         'views/helpdesk_ticket_views.xml',
         'views/helpdesk_sla_views.xml',
