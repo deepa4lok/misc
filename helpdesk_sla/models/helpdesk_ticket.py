@@ -4,12 +4,18 @@ from datetime import datetime, timedelta
 class HelpdeskTicket(models.Model):
     _inherit = 'helpdesk.ticket'
 
+    sla_priority = fields.Selection([
+        ('0', 'Low'),
+        ('1', 'Medium'),
+        ('2', 'High'),
+        ('3', 'Critical')
+    ], string='SLA Priority')
     response_time_overdue = fields.Boolean(string='Response Time Overdue', compute='_compute_overdue_times', store=True)
     resolution_time_overdue = fields.Boolean(string='Resolution Time Overdue', compute='_compute_overdue_times', store=True)
     remaining_response_time_hours = fields.Integer(string='Remaining Response Time (hours)', compute='_compute_remaining_times', store=True)
     remaining_resolution_time_hours = fields.Integer(string='Remaining Resolution Time (hours)', compute='_compute_remaining_times', store=True)
 
-    @api.depends('priority', 'team_id')
+    @api.depends('sla_priority', 'team_id')
     def _compute_remaining_times(self):
         for ticket in self:
             sla_line = self._get_sla_line(ticket)
@@ -27,9 +33,9 @@ class HelpdeskTicket(models.Model):
             ticket.resolution_time_overdue = ticket.remaining_resolution_time_hours < 0
 
     def _get_sla_line(self, ticket):
-        if ticket.priority and ticket.team_id:
+        if ticket.sla_priority and ticket.team_id:
             return self.env['sla.line'].search([
-                ('priority', '=', ticket.priority),
+                ('priority', '=', ticket.sla_priority),
                 ('sla_id.team_ids', 'in', ticket.team_id.id)
             ], limit=1)
         return None
