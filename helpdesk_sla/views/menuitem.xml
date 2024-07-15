@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem
+            id="sla_root_menu"
+            name="SLA Configuration"
+            parent="helpdesk_mgmt.helpdesk_ticket_main_menu"
+            groups="helpdesk_mgmt.group_helpdesk_manager"
+            sequence="1"/>
+
+
+    <menuitem id="menu_helpdesk_sla"
+              action="action_helpdesk_sla"
+              name="SLA Configuration"
+              parent="sla_root_menu"
+              groups="helpdesk_mgmt.group_helpdesk_manager"
+            sequence="1"/>
+
+    <menuitem id="menu_sla_line"
+              action="action_sla_line"
+              name="SLA Line Configuration"
+              parent="sla_root_menu"
+              groups="helpdesk_mgmt.group_helpdesk_manager"
+            sequence="2"/>
+
+</odoo>
