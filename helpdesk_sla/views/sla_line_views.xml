@@ -25,7 +25,7 @@
         <field name="arch" type="xml">
             <tree string="SLA Line">
                 <field name="name"/>
-                <field name="sla_priority"/>
+                <field name="priority"/>
                 <field name="response_time_hours"/>
                 <field name="resolution_time_hours"/>
                 <field name="next_working_day"/>
