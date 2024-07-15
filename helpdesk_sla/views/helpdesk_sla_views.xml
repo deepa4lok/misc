@@ -45,6 +45,6 @@
 
     <!-- Menu item for Helpdesk SLA -->
     <menuitem id="menu_helpdesk_sla" name="Helpdesk SLA"
-              parent="helpdesk_mgmt.menu_helpdesk_configuration" action="action_helpdesk_sla"
+              parent="helpdesk_mgmt.helpdesk_ticket_config_main_menu" action="action_helpdesk_sla"
               groups="helpdesk_mgmt.group_helpdesk_manager"/>
 </odoo>

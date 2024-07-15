@@ -42,6 +42,6 @@
 
     <!-- Menu item for SLA Line -->
     <menuitem id="menu_sla_line" name="SLA Line"
-              parent="helpdesk_mgmt.menu_helpdesk_configuration" action="action_sla_line"
+              parent="helpdesk_mgmt.helpdesk_ticket_config_main_menu" action="action_sla_line"
               groups="helpdesk_mgmt.group_helpdesk_manager"/>
 </odoo>
