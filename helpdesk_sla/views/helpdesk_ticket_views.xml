@@ -8,13 +8,15 @@
             <xpath expr="//field[@name='user_id']" position="after">
                 <field name="sla_priority"/>
             </xpath>
-            <xpath expr="//group[@name='sla']" position="inside">
-                <group>
-                    <field name="response_time_overdue"/>
-                    <field name="resolution_time_overdue"/>
-                    <field name="remaining_response_time_hours"/>
-                    <field name="remaining_resolution_time_hours"/>
-                </group>
+            <xpath expr="//page[@name='other_info']" position="after">
+                <page>
+                    <group>
+                        <field name="response_time_overdue"/>
+                        <field name="resolution_time_overdue"/>
+                        <field name="remaining_response_time_hours"/>
+                        <field name="remaining_resolution_time_hours"/>
+                    </group>
+                </page>
             </xpath>
         </field>
     </record>

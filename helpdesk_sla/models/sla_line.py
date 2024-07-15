@@ -5,7 +5,7 @@ class SLALine(models.Model):
     _description = 'SLA Line'
 
     name = fields.Char(string='Name', required=True)
-    sla_priority = fields.Selection([
+    priority = fields.Selection([
         ('0', 'Low'),
         ('1', 'Medium'),
         ('2', 'High'),
