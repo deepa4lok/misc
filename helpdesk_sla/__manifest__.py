@@ -7,6 +7,7 @@
     'category': 'Helpdesk',
     'depends': ['helpdesk_mgmt'],
     'data': [
+        'security/ir.model.access.csv',
         'views/menuitem.xml',
         'views/helpdesk_ticket_views.xml',
         'views/helpdesk_sla_views.xml',
