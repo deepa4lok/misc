@@ -5,12 +5,7 @@ class SLALine(models.Model):
     _description = 'SLA Line'
 
     name = fields.Char(string='Name', required=True)
-    priority = fields.Selection([
-        ('low', 'Low'),
-        ('medium', 'Medium'),
-        ('high', 'High'),
-        ('critical', 'Critical')
-    ], string='Priority', required=True)
+    priority = fields.Selection(related='sla_id.priority', string='Priority', store=True, readonly=False)
     response_time_hours = fields.Float(string='Response Time (hours)')
     resolution_time_hours = fields.Float(string='Resolution Time (hours)')
     next_working_day = fields.Boolean(string='SLA Starts at Next Working Day')

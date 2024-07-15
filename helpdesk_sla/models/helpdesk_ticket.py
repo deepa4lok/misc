@@ -4,13 +4,6 @@ from datetime import datetime, timedelta
 class HelpdeskTicket(models.Model):
     _inherit = 'helpdesk.ticket'
 
-    priority = fields.Selection([
-        ('low', 'Low'),
-        ('medium', 'Medium'),
-        ('high', 'High'),
-        ('critical', 'Critical')
-    ], string='Ticket Priority')
-
     response_time_overdue = fields.Boolean(string='Response Time Overdue', compute='_compute_overdue_times', store=True)
     resolution_time_overdue = fields.Boolean(string='Resolution Time Overdue', compute='_compute_overdue_times', store=True)
     remaining_response_time_hours = fields.Integer(string='Remaining Response Time (hours)', compute='_compute_remaining_times', store=True)

@@ -3,22 +3,20 @@
     <record id="view_helpdesk_ticket_form_inherit" model="ir.ui.view">
         <field name="name">helpdesk.ticket.form.inherit</field>
         <field name="model">helpdesk.ticket</field>
-        <field name="inherit_id" ref="helpdesk_mgmt.ticket_view_form"/>
+        <field name="inherit_id" ref="helpdesk_mgmt.helpdesk_ticket_view_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='category_id']" position="after">
+            <xpath expr="//group[@name='description']" position="before">
                 <group name="priority">
                     <field name="priority"/>
                 </group>
             </xpath>
-            <xpath expr="//page[@name='other_info']" position="after">
-                <page string="SLA Metrics" name="sla">
-                    <group>
-                        <field name="response_time_overdue"/>
-                        <field name="resolution_time_overdue"/>
-                        <field name="remaining_response_time_hours"/>
-                        <field name="remaining_resolution_time_hours"/>
-                    </group>
-                </page>
+            <xpath expr="//group[@name='sla']" position="inside">
+                <group>
+                    <field name="response_time_overdue"/>
+                    <field name="resolution_time_overdue"/>
+                    <field name="remaining_response_time_hours"/>
+                    <field name="remaining_resolution_time_hours"/>
+                </group>
             </xpath>
         </field>
     </record>

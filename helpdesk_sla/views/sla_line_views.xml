@@ -23,7 +23,7 @@
         <field name="name">sla.line.tree</field>
         <field name="model">sla.line</field>
         <field name="arch" type="xml">
-            <tree string="SLA Lines">
+            <tree string="SLA Line">
                 <field name="name"/>
                 <field name="priority"/>
                 <field name="response_time_hours"/>
@@ -32,4 +32,16 @@
             </tree>
         </field>
     </record>
+
+    <!-- Action for SLA Line -->
+    <record id="action_sla_line" model="ir.actions.act_window">
+        <field name="name">SLA Line</field>
+        <field name="res_model">sla.line</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Menu item for SLA Line -->
+    <menuitem id="menu_sla_line" name="SLA Line"
+              parent="helpdesk_mgmt.menu_helpdesk_configuration" action="action_sla_line"
+              groups="helpdesk_mgmt.group_helpdesk_manager"/>
 </odoo>
