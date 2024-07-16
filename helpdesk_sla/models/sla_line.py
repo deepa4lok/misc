@@ -10,7 +10,7 @@ class SLALine(models.Model):
         ('1', 'Medium'),
         ('2', 'High'),
         ('3', 'Critical')
-    ], string='SLA Priority', required=True)
+    ], string='Priority', required=True)
     response_time_hours = fields.Float(string='Response Time (hours)')
     resolution_time_hours = fields.Float(string='Resolution Time (hours)')
     next_working_day = fields.Boolean(string='SLA Starts at Next Working Day')
