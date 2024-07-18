@@ -241,7 +241,9 @@ class PickingfromOdootoMonta(models.Model):
                 )
                 item_tax_results = acc_tax._compute_taxes([sol_item_convert_tax])
                 item_totals = list(item_tax_results['totals'].values())[0]
-                item_amount_incl_tax = item_totals['amount_tax']
+                item_amount_untaxed = item_totals['amount_untaxed']
+                item_amount_tax = item_totals['amount_tax']
+                item_amount_incl_tax = item_amount_untaxed + item_amount_tax
                 sol_item.update({
                     "ItemPriceInclTax": item_amount_incl_tax,
                     "ItemPriceExclTax": sol.price_unit,
