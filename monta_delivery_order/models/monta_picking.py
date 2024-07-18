@@ -111,6 +111,7 @@ class PickingfromOdootoMonta(models.Model):
 
     def monta_good_receipt_content(self, button_action=False):
         config = self.env['monta.config'].search([], limit=1)
+        acc_tax = self.env['account.tax']
         planned_shipment_date = self.planned_shipment_date.isoformat()
         shipped = self.shipped.isoformat() if self.shipped else planned_shipment_date
         delivery_add = self.partner_delivery_address_id
@@ -227,9 +228,23 @@ class PickingfromOdootoMonta(models.Model):
                         "ShippingCost": True,
                     })
             else:
+                sol_item_convert_tax = acc_tax._convert_to_tax_base_line_dict(
+                    self,
+                    partner=sol.order_id.partner_id,
+                    currency=sol.order_id.currency_id,
+                    product=sol.product_id,
+                    taxes=sol.tax_id,
+                    price_unit=sol.price_unit,
+                    quantity=1,
+                    discount=sol.discount,
+                    price_subtotal=sol.price_subtotal,
+                )
+                item_tax_results = acc_tax._compute_taxes([sol_item_convert_tax])
+                item_totals = list(item_tax_results['totals'].values())[0]
+                item_amount_incl_tax = item_totals['amount_tax']
                 sol_item.update({
-                    "ItemPriceInclTax": sol.price_total,
-                    "ItemPriceExclTax": sol.price_subtotal,
+                    "ItemPriceInclTax": item_amount_incl_tax,
+                    "ItemPriceExclTax": sol.price_unit,
                     "Sku": sol.product_id.default_code,
                     "Reference": sol.product_id.name
                 })
