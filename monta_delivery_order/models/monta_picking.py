@@ -353,8 +353,8 @@ class PickingfromOdootoMonta(models.Model):
                             else:
                                 outboundMoveData[(move_obj, batch_ref)] = qty
                 if obj.picking_id.sale_id and track_dic:
-                    track_data = json.dumps(track_dic)
-                    body = _('Tracking Info:\n %s', track_data[1:-1])
+                    # track_data = json.dumps(track_dic)
+                    body = _('Tracking Info:\n %s', track_dic['TrackAndTraceLink'])
                     obj.picking_id.sale_id.message_post(body=body)
                     obj.picking_id.\
                         write({'monta_carrier_tracking_url':track_dic['TrackAndTraceLink'],
