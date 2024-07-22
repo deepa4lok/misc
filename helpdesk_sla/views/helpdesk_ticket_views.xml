@@ -6,7 +6,7 @@
         <field name="inherit_id" ref="helpdesk_mgmt.ticket_view_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='user_id']" position="after">
-                <field name="sla_priority"/>
+                <field name="priority"/>
             </xpath>
             <xpath expr="//page[@name='other_info']" position="after">
                 <page>
