@@ -71,7 +71,7 @@ class FTPConfig(models.Model):
             for attempt in range(retries):
                 try:
                     transport = paramiko.Transport((config.server, 22))
-                    transport.banner_timeout = 60  # Increase the banner timeout
+                    transport.banner_timeout = 200  # Increase the banner timeout
                     transport.connect(username=config.user, password=config.password)
                     sftp = paramiko.SFTPClient.from_transport(transport)
                     break
@@ -110,10 +110,19 @@ class FTPConfig(models.Model):
     def automated_run(self):
         configurations = self.search([])
         for config in configurations:
-            try:
-                config.do_send()
-            except Exception as e:
-                _logger.error("Automated run failed for config %s: %s", config.id, e)
+            retries = 2
+            while retries > 0:
+                try:
+                    config.do_send()
+                    break
+                except Exception as e:
+                    retries -= 1
+                    _logger.error("Automated run failed for config %s: %s", config.id, e)
+                    if retries > 0:
+                        _logger.info("Retrying for config %s in 5 seconds...", config.id)
+                        time.sleep(5)
+                    else:
+                        _logger.error("Retries exhausted for config %s", config.id)
 
     def do_send(self):
         cursor = self._cr
