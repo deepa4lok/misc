@@ -353,8 +353,8 @@ class PickingfromOdootoMonta(models.Model):
                             else:
                                 outboundMoveData[(move_obj, batch_ref)] = qty
                 if obj.picking_id.sale_id and track_dic:
-                    track_data = json.dumps(track_dic)
-                    body = _('Tracking Info:\n %s', track_data[1:-1])
+                    # track_data = json.dumps(track_dic)
+                    body = _('Tracking Info:\n %s', track_dic['TrackAndTraceLink'])
                     obj.picking_id.sale_id.message_post(body=body)
                     obj.picking_id.\
                         write({'monta_carrier_tracking_url':track_dic['TrackAndTraceLink'],
@@ -441,32 +441,49 @@ class MontaInboundtoOdooMove(models.Model):
         return True
 
     def validate_picking_from_monta_qty(self, inboundMoveData={}, outboundMoveData={}):
+        ctx = self.env.context.copy()
+        #Imp: Add all parameter to skip _pre_action_done_hook()
+        ctx.update({
+            'skip_immediate':True,
+            'skip_backorder': True,
+            'skip_sms':True,
+            'skip_expired':True})
         picking_obj = self.env['stock.picking']
         backorderConfirmObj = self.env['stock.backorder.confirmation']
         update_picking_msg = {}
         monta_obj = self.env['picking.from.odooto.monta']
 
         def _assign_lot(moveObj, lotRef, qty):
-            # moveObj.move_line_ids.unlink()
+            try:
+                # moveObj.move_line_ids.unlink()
 
-            product = moveObj.product_id
-            picking = moveObj.picking_id
+                product = moveObj.product_id
+                picking = moveObj.picking_id
 
-            data = {'picking_id': picking.id,
-                    'product_id': product.id,
-                    'qty_done': qty}
+                data = {'picking_id': picking.id,
+                        'product_id': product.id,
+                        'qty_done': qty}
 
-            if picking.picking_type_code == 'incoming':
-                data.update({'lot_name': lotRef})
-            elif picking.picking_type_code == 'outgoing':
-                lot = self.env['stock.lot'].search(
-                    [('name', '=', lotRef),('product_id', '=', product.id),
-                     ('company_id', '=', moveObj.company_id.id)])
-                if lot:
-                    data.update({'lot_id': lot.id})
+                if picking.picking_type_code == 'incoming':
+                    data.update({'lot_name': lotRef})
+                elif picking.picking_type_code == 'outgoing':
+                    lot = self.env['stock.lot'].search(
+                        [('name', '=', lotRef),('product_id', '=', product.id),
+                         ('company_id', '=', moveObj.company_id.id)])
+                    if lot:
+                        data.update({'lot_id': lot.id})
 
-            if ('lot_name' in data) or ('lot_id' in data):
-                moveObj.write({'move_line_ids': [(0, 0, data)]})
+                if ('lot_name' in data) or ('lot_id' in data):
+                    move_line_obj = moveObj.move_line_nosuggest_ids.\
+                        filtered(lambda ml: ml.product_id.id == data['product_id'])
+                    if move_line_obj:
+                        moveObj.write({'move_line_ids': [(1, move_line_obj.id, data)]})
+                    else:
+                        moveObj.write({'move_line_ids': [(0, 0, data)]})
+            except Exception as e:
+                _logger.info(
+                    "\nError: Monta Assigning LOT %s,\n" % (e)
+                )
 
         # GET inbound
         for inboundObj, moveDt in inboundMoveData.items():
@@ -502,9 +519,13 @@ class MontaInboundtoOdooMove(models.Model):
         for pickObj in picking_obj:
             monta_obj |= pickObj.monta_log_id
             try:
-                res = pickObj.button_validate()
+                ctx.update({'picking_ids_not_to_backorder':pickObj.ids})
+                res = pickObj.with_context(ctx).button_validate()
                 if res is True:
                     return res
+                _logger.info(
+                    "\nWarning: Monta Outbound scheduler button_validate() proceeded %s,\n" % (res)
+                )
 
                 self.partial_validation_from_monta(pickObj, res)
 
