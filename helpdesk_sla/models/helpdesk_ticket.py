@@ -4,6 +4,13 @@ from datetime import datetime, timedelta
 class HelpdeskTicket(models.Model):
     _inherit = 'helpdesk.ticket'
 
+    priority = fields.Selection([
+        ('0', 'Low'),
+        ('1', 'Medium'),
+        ('2', 'High'),
+        ('3', 'Critical')
+    ], string='Priority', default='0')
+
     response_time_overdue = fields.Boolean(string='Response Time Overdue', compute='_compute_overdue_times', store=True)
     resolution_time_overdue = fields.Boolean(string='Resolution Time Overdue', compute='_compute_overdue_times', store=True)
     remaining_response_time_hours = fields.Integer(string='Remaining Response Time (hours)', compute='_compute_remaining_times', store=True)
@@ -19,6 +26,25 @@ class HelpdeskTicket(models.Model):
             else:
                 ticket.remaining_response_time_hours = 0
                 ticket.remaining_resolution_time_hours = 0
+
+    @api.model
+    def message_new(self, msg_dict, custom_values=None):
+        custom_values = custom_values or {}
+        if custom_values.get('model') == 'helpdesk.ticket':
+            ticket = self.search([('id', '=', custom_values.get('res_id'))])
+            done_stage = self.env.ref('helpdesk_mgmt.helpdesk_ticket_stage_done')
+            in_progress_stage = self.env.ref('helpdesk_mgmt.helpdesk_ticket_stage_in_progress')
+
+            if ticket and ticket.stage_id.id == done_stage.id:
+                # Update the ticket's stage to 'In Progress'
+                ticket.write({'stage_id': in_progress_stage.id})
+
+                # Add the 're-opened' tag
+                tag_reopened = self.env.ref('helpdesk_sla.tag_reopened')
+                if tag_reopened:
+                    ticket.write({'tag_ids': [(4, tag_reopened.id)]})
+
+        return super(HelpdeskTicket, self).message_new(msg_dict, custom_values)
 
     @api.depends('remaining_response_time_hours', 'remaining_resolution_time_hours')
     def _compute_overdue_times(self):

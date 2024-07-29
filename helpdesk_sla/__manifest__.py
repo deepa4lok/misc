@@ -7,10 +7,13 @@
     'category': 'Helpdesk',
     'depends': ['helpdesk_mgmt'],
     'data': [
+        'security/ir.model.access.csv',
+        'views/menuitem.xml',
         'views/helpdesk_ticket_views.xml',
         'views/helpdesk_sla_views.xml',
         'views/sla_line_views.xml',
         'data/ir_cron_data.xml',
+        'data/data.xml',
     ],
     'installable': True,
     'application': False,
