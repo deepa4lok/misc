@@ -1,7 +1,7 @@
 from odoo import models, fields
 
 class SLALine(models.Model):
-    _name = 'sla.line'
+    _name = 'helpdesk.sla.line'
     _description = 'SLA Line'
 
     name = fields.Char(string='Name', required=True)

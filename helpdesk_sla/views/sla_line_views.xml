@@ -2,7 +2,7 @@
     <!-- Form view for SLA Line -->
     <record id="view_sla_line_form" model="ir.ui.view">
         <field name="name">sla.line.form</field>
-        <field name="model">sla.line</field>
+        <field name="model">helpdesk.sla.line</field>
         <field name="arch" type="xml">
             <form string="SLA Line">
                 <sheet>
@@ -21,7 +21,7 @@
     <!-- Tree view for SLA Line -->
     <record id="view_sla_line_tree" model="ir.ui.view">
         <field name="name">sla.line.tree</field>
-        <field name="model">sla.line</field>
+        <field name="model">helpdesk.sla.line</field>
         <field name="arch" type="xml">
             <tree string="SLA Line">
                 <field name="name"/>
@@ -36,7 +36,7 @@
     <!-- Action for SLA Line -->
     <record id="action_sla_line" model="ir.actions.act_window">
         <field name="name">SLA Line</field>
-        <field name="res_model">sla.line</field>
+        <field name="res_model">helpdesk.sla.line</field>
         <field name="view_mode">tree,form</field>
     </record>
 
