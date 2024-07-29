@@ -29,17 +29,6 @@ class Sale(models.Model):
             # raise ValidationError(
             #     _("Delivery date must be future date OR cannot be empty!")
             # )
-        return super().action_confirm()
-
-    @api.onchange('partner_id')
-    def _partner_onchange(self):
-        carrier = (
-                self.with_company(self.company_id).partner_id.property_delivery_carrier_id
-                or self.with_company(self.company_id).partner_id.commercial_partner_id.property_delivery_carrier_id
-        )
-        self.carrier_id = carrier and carrier.id or False
-
-    def action_confirm(self):
         for self_obj in self:
             if self_obj.website_id:
                 continue
@@ -57,3 +46,11 @@ class Sale(models.Model):
                         'delivery_message': delivery_message,
                     })
         return super().action_confirm()
+
+    @api.onchange('partner_id')
+    def _partner_onchange(self):
+        carrier = (
+                self.with_company(self.company_id).partner_id.property_delivery_carrier_id
+                or self.with_company(self.company_id).partner_id.commercial_partner_id.property_delivery_carrier_id
+        )
+        self.carrier_id = carrier and carrier.id or False
