@@ -43,8 +43,4 @@
         <field name="view_mode">tree,form</field>
     </record>
 
-    <!-- Menu item for Helpdesk SLA -->
-    <menuitem id="menu_helpdesk_sla" name="Helpdesk SLA"
-              parent="helpdesk_mgmt.menu_helpdesk_configuration" action="action_helpdesk_sla"
-              groups="helpdesk_mgmt.group_helpdesk_manager"/>
 </odoo>

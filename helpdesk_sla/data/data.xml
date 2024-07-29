@@ -1,0 +1,6 @@
+<odoo>
+    <record id="tag_reopened" model="helpdesk.ticket.tag">
+        <field name="name">re-opened</field>
+        <field name="color">2</field>
+    </record>
+</odoo>
