@@ -29,4 +29,28 @@ class Sale(models.Model):
             # raise ValidationError(
             #     _("Delivery date must be future date OR cannot be empty!")
             # )
+        for self_obj in self:
+            if self_obj.website_id:
+                continue
+            delivery_lines = self_obj.order_line.filtered(lambda l: l.is_delivery)
+            if self_obj.carrier_id \
+                    and not delivery_lines:
+                delivery_lines.unlink()
+                carrier_vals = self_obj.carrier_id.rate_shipment(self_obj)
+                if carrier_vals.get('success'):
+                    delivery_message = carrier_vals.get('warning_message', False)
+                    delivery_price = carrier_vals['price']
+                    self_obj.set_delivery_line(self_obj.carrier_id, delivery_price)
+                    self_obj.write({
+                        'recompute_delivery_price': False,
+                        'delivery_message': delivery_message,
+                    })
         return super().action_confirm()
+
+    @api.onchange('partner_id')
+    def _partner_onchange(self):
+        carrier = (
+                self.with_company(self.company_id).partner_id.property_delivery_carrier_id
+                or self.with_company(self.company_id).partner_id.commercial_partner_id.property_delivery_carrier_id
+        )
+        self.carrier_id = carrier and carrier.id or False

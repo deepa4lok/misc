@@ -14,4 +14,4 @@ class SLALine(models.Model):
     response_time_hours = fields.Float(string='Response Time (hours)')
     resolution_time_hours = fields.Float(string='Resolution Time (hours)')
     next_working_day = fields.Boolean(string='SLA Starts at Next Working Day')
-    sla_id = fields.Many2one('helpdesk.sla', string='SLA', ondelete='cascade')
+    helpdesk_sla_id = fields.Many2one('helpdesk.sla', string='SLA', ondelete='cascade')
