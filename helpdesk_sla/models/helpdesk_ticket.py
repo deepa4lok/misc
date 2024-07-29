@@ -54,9 +54,9 @@ class HelpdeskTicket(models.Model):
 
     def _get_sla_line(self, ticket):
         if ticket.priority and ticket.team_id:
-            return self.env['sla.line'].search([
+            return self.env['helpdesk.sla.line'].search([
                 ('priority', '=', ticket.priority),
-                ('sla_id.team_ids', 'in', ticket.team_id.id)
+                ('helpdesk_sla_id.team_ids', 'in', ticket.team_id.id)
             ], limit=1)
         return None
 
