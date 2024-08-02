@@ -348,12 +348,19 @@ class PickingfromOdootoMonta(models.Model):
                             [('product_id.default_code', '=', sku), ('monta_move_id.monta_order_name', '=', obj.monta_order_name)])
                         if odoo_outbound_line:
                             odoo_outbound_lines_obj |= odoo_outbound_line
-
                             batch_ref = batch_content['Title']
                             batch_id = batch_content['Id']
 
-                            if odoo_outbound_line.monta_outbound_batch_ids.filtered(
-                                    lambda rec: rec.batch_id == str(batch_id)):
+                            batch_qty_total = 0
+                            batch_ids = odoo_outbound_line.monta_outbound_batch_ids
+                            batch_obj = odoo_outbound_line.monta_outbound_batch_ids.\
+                                search([('id', 'in', batch_ids.ids), 
+                                        ('batch_id', '=', batch_id),
+                                        ('batch_ref', '=', batch_ref)])
+                            if batch_obj:
+                                batch_qty_total = sum(batch_obj.mapped('batch_quantity'))
+
+                            if batch_qty_total >= odoo_outbound_line.ordered_quantity:
                                 continue
 
                             data = {'batch_id':batch_id,
