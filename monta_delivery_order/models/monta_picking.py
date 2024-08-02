@@ -15,6 +15,7 @@ _logger = logging.getLogger(__name__)
 
 class PickingfromOdootoMonta(models.Model):
     _name = 'picking.from.odooto.monta'
+    _inherit = ['mail.thread']
     _order = 'create_date desc'
     _rec_name = 'picking_id'
     _description = 'Picking Odoo To Monta'
@@ -60,6 +61,11 @@ class PickingfromOdootoMonta(models.Model):
                               required=True, readonly=True, store=True, compute=_compute_response)
     monta_order_name = fields.Char(string="Monta Order Name", compute=_compute_order_name, store=True)
     message = fields.Char('Error/Exception Message')
+
+    def write_response(self, message=None):
+        if message is None:
+            return
+        self.message_post(body=message)
 
     def call_monta_interface(self, request, method):
         config = self.env['monta.config'].search([], limit=1)
@@ -305,10 +311,8 @@ class PickingfromOdootoMonta(models.Model):
     @api.model
     def _cron_monta_get_outbound_batches(self):
         method = "order/%s/batches"
-        monta_move_obj = self.env['stock.move.from.odooto.monta']
+        monta_move_obj = odoo_outbound_lines_obj = self.env['stock.move.from.odooto.monta']
         monta_outbond_obj = self.env['monta.stock.lot']
-        stockMove = self.env['stock.move']
-        outboundMoveData = {}
         for obj in self.search([('picking_id.picking_type_code', '=', 'outgoing'),
                                 ('picking_id.state', 'not in', ('draft', 'done', 'cancel')), ('status', '=', 'successful')]):
             try:
@@ -317,9 +321,15 @@ class PickingfromOdootoMonta(models.Model):
                 response_order_info = self.call_monta_interface("GET", "https://api-v6.monta.nl/order/%s"%orderNum)
                 track_dic = {}
                 if response.status_code == 200:
+                    response_data = json.loads(response.text)
+                    message = 'Outbound Schedular Batches Response: ' + json.dumps(response_data)
+
                     shipped_date = False
                     if response_order_info.status_code == 200:
+
                         response_order_info_data = json.loads(response_order_info.text)
+                        message += '\nOutbound Schedular Tracking Response: ' + json.dumps(response_order_info_data)
+
                         shipped_date = response_order_info_data['Shipped']
                         shipped_date = self.convert_TZ_UTC(shipped_date) if shipped_date else shipped_date
                         if obj.picking_id.sale_id:
@@ -328,7 +338,8 @@ class PickingfromOdootoMonta(models.Model):
                             track_dic['TrackAndTraceCode'] = response_order_info_data['TrackAndTraceCode']
                             track_dic['ShipperDescription'] = response_order_info_data['ShipperDescription']
                             track_dic['PackingServices'] = response_order_info_data['PackingServices']
-                    response_data = json.loads(response.text)
+
+
                     for line in response_data.get('BatchLines', []):
                         sku = line['Sku']
                         batch_content = line['BatchContent']
@@ -336,41 +347,38 @@ class PickingfromOdootoMonta(models.Model):
                         odoo_outbound_line = monta_move_obj.search(
                             [('product_id.default_code', '=', sku), ('monta_move_id.monta_order_name', '=', obj.monta_order_name)])
                         if odoo_outbound_line:
+                            odoo_outbound_lines_obj |= odoo_outbound_line
+
                             batch_ref = batch_content['Title']
-                            data = {'batch_id':batch_content['Id'],
-                                    'batch_ref':batch_content['Title'],
+                            batch_id = batch_content['Id']
+
+                            if odoo_outbound_line.monta_outbound_batch_ids.filtered(
+                                    lambda rec: rec.batch_id == str(batch_id)):
+                                continue
+
+                            data = {'batch_id':batch_id,
+                                    'batch_ref':batch_ref,
                                     'batch_quantity':qty,
                                     'monta_outbound_id': odoo_outbound_line.id}
+
                             if shipped_date:
                                 data.update({'monta_create_date': shipped_date})
                             # batch created
                             monta_outbond_obj.create(data)
 
-                            move_obj = odoo_outbound_line.move_id
-                            stockMove |= move_obj
-                            if outboundMoveData.get((move_obj, batch_ref), False):
-                                outboundMoveData[(move_obj, batch_ref)] +=  qty
-                            else:
-                                outboundMoveData[(move_obj, batch_ref)] = qty
                 if obj.picking_id.sale_id and track_dic:
-                    # track_data = json.dumps(track_dic)
                     body = _('Tracking Info:\n %s', track_dic['TrackAndTraceLink'])
                     obj.picking_id.sale_id.message_post(body=body)
                     obj.picking_id.\
                         write({'monta_carrier_tracking_url':track_dic['TrackAndTraceLink'],
                                'carrier_tracking_ref':track_dic['TrackAndTraceCode']})
-                    # mail_template = self.env.ref('monta_delivery_order.mail_template_delivery_tracking',
-                    #                                     raise_if_not_found=False)
-                    # if mail_template.active:
-                    #     mail_template.send_mail(obj.picking_id.id)
-
+                obj.write_response(message)
             except Exception as e:
                 _logger.info(
                     "\nError: Monta Outbound scheduler %s\n,"%(e)
                 )
-        if outboundMoveData:
-            # stockMove.mapped('move_line_ids').unlink()
-            self.env['monta.inboundto.odoo.move'].validate_picking_from_monta_qty(outboundMoveData=outboundMoveData)
+        if odoo_outbound_lines_obj:
+            self.env['monta.inboundto.odoo.move'].validate_picking_from_monta_qty(outboundMoveData=odoo_outbound_lines_obj)
 
 
 class PickingLinefromOdootoMonta(models.Model):
@@ -385,7 +393,6 @@ class PickingLinefromOdootoMonta(models.Model):
     ordered_quantity = fields.Float(related='move_id.product_qty', string='Ordered Quantity')
     monta_inbound_forecast_id = fields.Char("Monta Inbound Forecast Id")
     monta_inbound_line_ids = fields.One2many('monta.inboundto.odoo.move', 'monta_move_line_id')
-    # monta_outbound_batch_ids = fields.One2many('monta.outbound.batch', 'monta_outbound_id')
     monta_outbound_batch_ids = fields.One2many('monta.stock.lot', 'monta_outbound_id')
 
 
@@ -399,16 +406,17 @@ class MontaInboundtoOdooMove(models.Model):
     inbound_id = fields.Char('Inbound ID')
     product_id = fields.Many2one('product.product', related='monta_move_line_id.product_id')
     inbound_quantity = fields.Float(string='Inbound Quantity')
-    # monta_batch_ids = fields.One2many('monta.inbound.batch', 'monta_inbound_id')
     monta_batch_ids = fields.One2many('monta.stock.lot', 'monta_inbound_id')
 
     def apply_backdate(self, pickObj):
         date = False
         if pickObj.picking_type_code == 'outgoing':
-            date = max(pickObj.monta_log_id.monta_stock_move_ids.monta_outbound_batch_ids.mapped('monta_create_date'))
+            date = max(pickObj.monta_log_id.monta_stock_move_ids.
+                       monta_outbound_batch_ids.mapped('monta_create_date'))
 
         elif pickObj.picking_type_code == 'incoming':
-            date = max(pickObj.monta_log_id.monta_stock_move_ids.monta_inbound_line_ids.monta_batch_ids.mapped('monta_create_date'))
+            date = max(pickObj.monta_log_id.monta_stock_move_ids.
+                       monta_inbound_line_ids.monta_batch_ids.mapped('monta_create_date'))
         if date:
             pickObj.move_line_ids.write(
                 {
@@ -418,6 +426,7 @@ class MontaInboundtoOdooMove(models.Model):
         return
 
     def partial_validation_from_monta(self, pickObj, res):
+        #Mostly called for incoming partial shipment
         backorderConfirmObj = self.env['stock.backorder.confirmation']
 
         approved = []
@@ -426,10 +435,16 @@ class MontaInboundtoOdooMove(models.Model):
             response = self.env['picking.from.odooto.monta'].call_monta_interface("GET", method)
             if response.status_code == 200:
                 response_data = json.loads(response.text)
+                message = "Inbound Schedular 'API inboundforecast/group' Response " + json.dumps(response_data)
+                pickObj.monta_log_id.write_response(message)
                 approved = [val['Approved'] for i, val in enumerate(response_data['InboundForecasts']) if not val['Approved']]
+            else:
+                message = "Inbound Schedular 'API inboundforecast/group' Response "+ str(response.status_code)
+                return pickObj.monta_log_id.write_response(message)
 
-        if len(approved) == 0: #for outgoing shipment no check required
-            self.apply_backdate(pickObj)
+        if len(approved) == 0:
+            if res is True:
+                return res
             ctx = res['context']
             # cancel backorder and validate picking
             line_fields = [f for f in backorderConfirmObj._fields.keys()]
@@ -445,18 +460,14 @@ class MontaInboundtoOdooMove(models.Model):
         #Imp: Add all parameter to skip _pre_action_done_hook()
         ctx.update({
             'skip_immediate':True,
-            'skip_backorder': True,
             'skip_sms':True,
             'skip_expired':True})
         picking_obj = self.env['stock.picking']
-        backorderConfirmObj = self.env['stock.backorder.confirmation']
         update_picking_msg = {}
         monta_obj = self.env['picking.from.odooto.monta']
 
         def _assign_lot(moveObj, lotRef, qty):
             try:
-                # moveObj.move_line_ids.unlink()
-
                 product = moveObj.product_id
                 picking = moveObj.picking_id
 
@@ -474,78 +485,80 @@ class MontaInboundtoOdooMove(models.Model):
                         data.update({'lot_id': lot.id})
 
                 if ('lot_name' in data) or ('lot_id' in data):
-                    move_line_obj = moveObj.move_line_nosuggest_ids.\
-                        filtered(lambda ml: ml.product_id.id == data['product_id'])
-                    if move_line_obj:
-                        moveObj.write({'move_line_ids': [(1, move_line_obj.id, data)]})
-                    else:
-                        moveObj.write({'move_line_ids': [(0, 0, data)]})
+                    movelineObj = moveObj.move_line_ids
+                    moveObj.write({'move_line_ids': [(0, 0, data)]})
+                    return moveObj.move_line_ids-movelineObj
             except Exception as e:
                 _logger.info(
                     "\nError: Monta Assigning LOT %s,\n" % (e)
                 )
+                return []
 
         # GET inbound
-        for inboundObj, moveDt in inboundMoveData.items():
-            moveObj = moveDt[0]
-            inboundQty = moveDt[1]
-            # batchRef = moveObj.product_id.default_code + '_' + moveDt[2]
-            batchRef = moveDt[2]
-            monta_obj |= moveObj.picking_id.monta_log_id
-            try:
-                if moveObj.state in ('confirmed', 'partially_available', 'assigned'):
-                    _assign_lot(moveObj, batchRef, inboundQty)
-                    picking_obj |= moveObj.picking_id
-                update_picking_msg[moveObj.picking_id.monta_log_id] = ''
-            except Exception as e:
-                msg = "Error: Inbound lot/serial number assigning: %s''!!\n" % (e)
-                update_picking_msg[moveObj.picking_id.monta_log_id] = msg
+        for odoo_inbound_line in inboundMoveData:
+            moveObj = odoo_inbound_line.move_id
+            monta_log_id = moveObj.picking_id.monta_log_id
+            msg = ''
+            if moveObj.state in ('confirmed', 'partially_available', 'assigned'):
+                picking_obj |= moveObj.picking_id
+
+                for batch_obj in odoo_inbound_line.monta_inbound_line_ids.mapped('monta_batch_ids'):
+                    if batch_obj.stock_move_line:
+                        continue
+                    batch_quantity = batch_obj.monta_inbound_id.inbound_quantity
+                    try:
+                        new_move_line = _assign_lot(moveObj, batch_obj.batch_ref, batch_quantity)
+                        if new_move_line:
+                            batch_obj.stock_move_line = new_move_line
+                    except Exception as e:
+                        msg += "Error: Inbound lot/serial number assigning: %s''!!\n" % (e)
+                update_picking_msg[monta_log_id] = msg
+
+            monta_obj |= monta_log_id
 
         # GET Outbound
-        for keys, outQty in outboundMoveData.items():
-            moveObj = keys[0]
-            monta_obj |= moveObj.picking_id.monta_log_id
-            # batchRef = moveObj.product_id.default_code + '_' + keys[1]
-            batchRef = keys[1]
-            try:
-                if moveObj.state in ('confirmed', 'partially_available', 'assigned'):
-                    _assign_lot(moveObj, batchRef, outQty)
-                    picking_obj |= moveObj.picking_id
-                update_picking_msg[moveObj.picking_id.monta_log_id] = ''
-            except Exception as e:
-                msg = "Error: Outbound lot/serial number assigning: %s''!!\n" % (e)
-                update_picking_msg[moveObj.picking_id.monta_log_id] = msg
+        for odoo_outbound_line in outboundMoveData:
+            moveObj = odoo_outbound_line.move_id
+            monta_log_id = moveObj.picking_id.monta_log_id
+            msg =''
+            if moveObj.state in ('confirmed', 'partially_available', 'assigned'):
+                picking_obj |= moveObj.picking_id
+                for batch_obj in odoo_outbound_line.monta_outbound_batch_ids:
+                    if batch_obj.stock_move_line:
+                        continue
+                    try:
+                        new_move_line = _assign_lot(moveObj, batch_obj.batch_ref, batch_obj.batch_quantity)
+                        if new_move_line:
+                            batch_obj.stock_move_line = new_move_line
+                    except Exception as e:
+                        msg += "Error: Outbound lot/serial number assigning: %s''!!\n" % (e)
+
+                update_picking_msg[monta_log_id] = msg
+                monta_obj |= monta_log_id
 
         for pickObj in picking_obj:
             monta_obj |= pickObj.monta_log_id
             try:
                 ctx.update({'picking_ids_not_to_backorder':pickObj.ids})
+
+                #apply backdate, if monta_create_date
+                self.apply_backdate(pickObj)
+
                 res = pickObj.with_context(ctx).button_validate()
                 if res is True:
                     return res
-                _logger.info(
-                    "\nWarning: Monta Outbound scheduler button_validate() proceeded %s,\n" % (res)
-                )
+                elif pickObj.picking_type_code == 'outgoing':
+                    return res
 
+                _logger.info(
+                    "\nWarning: Monta Outbound/Inbound scheduler after "
+                    "button_validate() proceeded with partial validation %s,\n" % (res)
+                )
                 self.partial_validation_from_monta(pickObj, res)
 
-                # Disable backorder creation #################
-                # ctx = res['context']
-                # # create backorder and process it
-                # line_fields = [f for f in backorderConfirmObj._fields.keys()]
-                # backOrderData = backorderConfirmObj.with_context(ctx).default_get(line_fields)
-                # backOrderId = backorderConfirmObj.with_context(ctx).create(backOrderData)
-                # backOrderId.with_context(ctx).process()
-                #
-                # #Validated backorder in order to sync to Monta
-                # backOrderPicking = self.env['stock.picking'].\
-                #     search([('picking_type_code','=', 'incoming'),
-                #             ('backorder_id', '=', pickObj.id),
-                #             ('state', 'in', ('partially_available', 'assigned'))])
-                # if backOrderPicking:
-                #     backOrderPicking.transfer_picking_to_monta()
-                # Disable backorder End###############
-                update_picking_msg[pickObj.monta_log_id] = ''
+                if pickObj.monta_log_id not in update_picking_msg:
+                    update_picking_msg[pickObj.monta_log_id] = ''
+
             except Exception as e:
                 pickObj |= pickObj
                 msg = ("Error Validating Picking: %s''!!\n" % (e))
@@ -557,14 +570,12 @@ class MontaInboundtoOdooMove(models.Model):
 
     @api.model
     def _cron_monta_get_inbound(self):
-        # self_obj = self.search([])
+        odoo_inbound_lines_obj = self.env['stock.move.from.odooto.monta']
         method = 'inbounds'
         config = self.env['monta.config'].search([], limit=1)
         if config.inbound_id:
             method = "inbounds?sinceid=" + config.inbound_id
         response = self.env['picking.from.odooto.monta'].call_monta_interface("GET", method)
-        inboundMoveData = {}
-        stockMove = self.env['stock.move']
         if response.status_code == 200:
             monta_inbound_ids = []
             response_data = json.loads(response.text)
@@ -576,20 +587,28 @@ class MontaInboundtoOdooMove(models.Model):
                     inboundRef = dt['InboundForecastReference']
                     inboundQty = dt['Quantity']
                     monta_create_date = self.env['picking.from.odooto.monta'].convert_TZ_UTC(dt['Created'])
-                    odoo_inbound_obj = self.env['stock.move.from.odooto.monta'].search(
-                        [('product_id.default_code', '=', sku), ('monta_move_id.monta_order_name', '=', inboundRef)])
-                    if odoo_inbound_obj:
-                        if odoo_inbound_obj.monta_inbound_line_ids.filtered(lambda rec: rec.inbound_id == str(inboundID)):
-                            continue
 
-                        inbound_data = {'monta_move_line_id': odoo_inbound_obj.id,'inbound_id': inboundID, 'inbound_quantity': inboundQty}
-                        batch_ref = False
+                    odoo_inbound_obj = self.env['stock.move.from.odooto.monta'].search(
+                        [('product_id.default_code', '=', sku),
+                         ('monta_move_id.monta_order_name', '=', inboundRef)])
+                    if odoo_inbound_obj:
+                        message = 'Inbound Schedular Batches Response: '+json.dumps(dt)
+                        odoo_inbound_obj.monta_move_id.write_response(message)
+                        odoo_inbound_lines_obj |= odoo_inbound_obj
+                        if odoo_inbound_obj.monta_inbound_line_ids.\
+                                filtered(lambda rec: rec.inbound_id == str(inboundID)):
+                            continue
+                        inbound_data = {'monta_move_line_id': odoo_inbound_obj.id,
+                                        'inbound_id': inboundID,
+                                        'inbound_quantity': inboundQty}
                         if dt.get('Batch', False):
                             batch_ref = dt['Batch']['Reference']
-                            inbound_data['monta_batch_ids'] = [(0, 0, {'batch_ref':batch_ref, 'batch_quantity':dt['Batch']['Quantity'], 'monta_create_date':monta_create_date})]
-                        newObj = self.create(inbound_data)
-                        stockMove |= odoo_inbound_obj.move_id
-                        inboundMoveData[newObj]=[odoo_inbound_obj.move_id, inboundQty, batch_ref]
+                            inbound_data['monta_batch_ids'] = [(0, 0,
+                                                                {'batch_ref':batch_ref,
+                                                                 'batch_quantity':dt['Batch']['Quantity'],
+                                                                 'monta_create_date':monta_create_date})]
+                        self.create(inbound_data)
+
                 except Exception as e:
                     _logger.info(
                         "\nError: Monta Inbound scheduler %s,\n" % (e)
@@ -604,6 +623,5 @@ class MontaInboundtoOdooMove(models.Model):
                 if new_inbound_id:
                     config.write({'inbound_id':new_inbound_id})
 
-                if inboundMoveData:
-                    # stockMove.mapped('move_line_ids').unlink()
-                    self.validate_picking_from_monta_qty(inboundMoveData=inboundMoveData)
+                if odoo_inbound_lines_obj:
+                    self.validate_picking_from_monta_qty(inboundMoveData=odoo_inbound_lines_obj)
