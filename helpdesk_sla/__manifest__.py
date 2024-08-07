@@ -1,6 +1,6 @@
 {
     'name': 'Helpdesk SLA',
-    'version': '1.0',
+    'version': '16.0.0.1',
     'summary': 'Add ticket priority field to helpdesk tickets and manage SLAs',
     'description': 'This module adds a priority field to helpdesk tickets and provides a way to manage SLAs.',
     'author': 'The Open Source Company',
