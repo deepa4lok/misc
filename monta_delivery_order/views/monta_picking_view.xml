@@ -58,6 +58,7 @@
                                                         <field name="batch_ref"/>
                                                         <field name="batch_quantity"/>
                                                         <field name="monta_create_date" string="Shipped Date"/>
+                                                         <field name="stock_move_line"/>
                                                      </tree>
                                                      <form string="Inbound">
                                                         <group>
@@ -87,6 +88,7 @@
                                                                             <field name="batch_ref"/>
                                                                             <field name="batch_quantity"/>
                                                                             <field name="monta_create_date"/>
+                                                                            <field name="stock_move_line"/>
                                                                         </tree>
                                                                     </field>
                                                                 </page>
@@ -110,6 +112,9 @@
                             </page>
                         </notebook>
                     </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_ids"/>
+                    </div>
                 </form>
             </field>
             </record>
