@@ -488,6 +488,10 @@ class MontaInboundtoOdooMove(models.Model):
                     lot = self.env['stock.lot'].search(
                         [('name', '=', lotRef),('product_id', '=', product.id),
                          ('company_id', '=', moveObj.company_id.id)])
+                    if not lot:
+                        lot = lot.create({'name':lotRef,
+                                    'product_id':product.id,
+                                    'company_id':moveObj.company_id.id})
                     if lot:
                         data.update({'lot_id': lot.id})
 
