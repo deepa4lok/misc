@@ -438,7 +438,7 @@ class MontaInboundtoOdooMove(models.Model):
 
         approved = []
         if pickObj.picking_type_code == 'incoming':
-            method = "https://api-v6.monta.nl/inboundforecast/group/"+pickObj.name
+            method = "https://api-v6.monta.nl/inboundforecast/group/"+pickObj.monta_log_id.monta_order_name
             response = self.env['picking.from.odooto.monta'].call_monta_interface("GET", method)
             if response.status_code == 200:
                 response_data = json.loads(response.text)
@@ -550,7 +550,7 @@ class MontaInboundtoOdooMove(models.Model):
         for pickObj in picking_obj:
             monta_obj |= pickObj.monta_log_id
             try:
-                ctx.update({'picking_ids_not_to_backorder':pickObj.ids})
+                # ctx.update({'picking_ids_not_to_backorder':pickObj.ids})
 
                 #apply backdate, if monta_create_date
                 self.apply_backdate(pickObj)
