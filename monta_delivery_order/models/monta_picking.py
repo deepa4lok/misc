@@ -30,6 +30,27 @@ class PickingfromOdootoMonta(models.Model):
             elif pick.monta_response_code and pick.monta_response_code != 200:
                 pick.picking_monta_response = False
                 pick.status = 'failed'
+
+    @api.depends('picking_id.move_line_ids', 'picking_id.move_ids')
+    def _compute_batch_status(self):
+        for pick in self:
+            batch_status = 'no_batches'
+            batches_obj = pick.monta_stock_move_ids.mapped('monta_outbound_batch_ids')
+            inbound_obj = pick.monta_stock_move_ids.mapped('monta_inbound_line_ids')
+            if not inbound_obj and not batches_obj:
+                pick.batches_status = batch_status
+                continue
+            for stock_move in pick.picking_id.move_ids:
+                total_qty_done = sum(stock_move.move_line_ids.mapped('qty_done'))
+                if stock_move.move_line_ids \
+                        and stock_move.move_line_ids.filtered(lambda ml: ml.lot_name or ml.lot_id) \
+                        and stock_move.product_uom_qty != total_qty_done:
+                    batch_status = 'partial_received'
+            if pick.picking_id.move_line_ids \
+                    and pick.picking_id.move_line_ids.filtered(lambda ml: ml.lot_name or ml.lot_id):
+                if batch_status == 'no_batches':
+                    batch_status = 'received'
+            pick.batches_status = batch_status
                 
     @api.depends('picking_id')
     def _compute_order_name(self):
@@ -57,10 +78,13 @@ class PickingfromOdootoMonta(models.Model):
     picking_monta_response = fields.Boolean(compute=_compute_response, default=False, store=True, string='Roularta Response')
     json_payload = fields.Text('Payload')
     client_order_ref = fields.Char(string="Customer Reference", related="picking_id.client_order_ref")
-    status = fields.Selection([('draft', 'Draft'), ('successful', 'Successful'), ('failed', 'Failed')], string='Status',
+    status = fields.Selection([('draft', 'Not yet sent to Monta'), ('successful', 'Successfully sent to Monta'), ('failed', 'Not successfully sent to Monta')], string='Status',
                               required=True, readonly=True, store=True, compute=_compute_response)
     monta_order_name = fields.Char(string="Monta Order Name", compute=_compute_order_name, store=True)
     message = fields.Char('Error/Exception Message')
+    picking_status = fields.Selection(related="picking_id.state", string="Picking Status")
+    batches_status = fields.Selection([('no_batches', 'No Batches Received'), ('received', 'Batches Received'),
+                              ('partial_received', 'Partial Batches Received')], string='Batch Status', readonly=True, store=True, compute=_compute_batch_status)
 
     def write_response(self, message=None):
         if message is None:
