@@ -131,6 +131,9 @@
                     <field name="sale_id" password="True"/>
                     <field name="planned_shipment_date"/>
                     <field name="shipped"/>
+                    <field name="status" string="Sent To Monta status"/>
+                    <field name="picking_status" />
+                    <field name="batches_status" />
                 </tree>
             </field>
         </record>
