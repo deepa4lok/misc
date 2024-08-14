@@ -152,6 +152,26 @@
             </field>
         </record>
 
+        <record id="view_monta_filter" model="ir.ui.view">
+                <field name="name">picking.from.odooto.monta.search</field>
+                <field name="model">picking.from.odooto.monta</field>
+                <field name="arch" type="xml">
+                    <search string="Jobs">
+                        <field name="status" string="Monta Order Sent Status" filter_domain="[('status', '=', self)]"/>
+                        <separator/>
+                        <field name="picking_status" string="Picking Status" filter_domain="[('picking_status', '=', self)]"/>
+                        <separator/>
+                        <field name="batches_status" string="Batches Status" filter_domain="[('batches_status', '=', self)]"/>
+                        <separator/>
+                        <group expand="0" string="Group By">
+                            <filter string="Monta Order Sent Status" name="status" domain="[]" context="{'group_by': 'status'}"/>
+                            <filter string="Picking Status" name="pick_status" domain="[]" context="{'group_by': 'picking_status'}"/>
+                            <filter string="Batches Status" name="batches_status" domain="[]" context="{'group_by': 'batches_status'}"/>
+                        </group>
+                    </search>
+                </field>
+            </record>
+
         <record model="ir.actions.act_window" id="action_monta_outbound_order">
             <field name="name">Outbound Order</field>
             <field name="res_model">picking.from.odooto.monta</field>
