@@ -157,11 +157,20 @@
                 <field name="model">picking.from.odooto.monta</field>
                 <field name="arch" type="xml">
                     <search string="Jobs">
-                        <field name="status" string="Monta Order Sent Status" filter_domain="[('status', '=', self)]"/>
+                        <filter name="draft_status" string="Not yet sent to Monta" domain="[('status', '=', 'draft')]"/>
+                        <filter name="successful_status" string="Successfully sent to Monta" domain="[('status', '=', 'successful')]"/>
+                        <filter name="failed_status" string="Not successfully sent to Monta" domain="[('status', '=', 'failed')]"/>
                         <separator/>
-                        <field name="picking_status" string="Picking Status" filter_domain="[('picking_status', '=', self)]"/>
+                        <filter name="picking_draft" string="Picking Draft" domain="[('picking_status', '=', 'draft')]"/>
+                        <filter name="picking_waiting" string="Picking Waiting" domain="[('picking_status', '=', 'waiting')]"/>
+                        <filter name="picking_confirmed" string="Picking Confirmed" domain="[('picking_status', '=', 'confirmed')]"/>
+                        <filter name="picking_assigned" string="Picking Ready" domain="[('picking_status', '=', 'assigned')]"/>
+                        <filter name="picking_done" string="Picking Done" domain="[('picking_status', '=', 'done')]"/>
+                        <filter name="picking_cancel" string="Picking Cancelled" domain="[('picking_status', '=', 'cancelled')]"/>
                         <separator/>
-                        <field name="batches_status" string="Batches Status" filter_domain="[('batches_status', '=', self)]"/>
+                        <filter name="no_batches" string="No Batches Received" domain="[('batches_status', '=', 'no_batches')]"/>
+                        <filter name="received_batches" string="Batches Received" domain="[('batches_status', '=', 'received')]"/>
+                        <filter name="partial_received" string="Partial Batches Received" domain="[('batches_status', '=', 'partial_received')]"/>
                         <separator/>
                         <group expand="0" string="Group By">
                             <filter string="Monta Order Sent Status" name="status" domain="[]" context="{'group_by': 'status'}"/>
