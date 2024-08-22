@@ -348,11 +348,14 @@ class PickingfromOdootoMonta(models.Model):
                     response_data = json.loads(response.text)
                     message = 'Outbound Schedular Batches Response: ' + json.dumps(response_data)
 
+                    monta_delivery_block_id = obj.picking_id.sale_id.monta_delivery_block_id
                     shipped_date = False
-                    if response_order_info.status_code == 200:
+                    if response_order_info.status_code == 200 \
+                            and (not monta_delivery_block_id or
+                                 (monta_delivery_block_id and not monta_delivery_block_id.no_tracking)):
 
                         response_order_info_data = json.loads(response_order_info.text)
-                        message += '\nOutbound Schedular Tracking Response: ' + json.dumps(response_order_info_data)
+                        message += '<br/>Outbound Schedular Tracking Response: ' + json.dumps(response_order_info_data)
 
                         shipped_date = response_order_info_data['Shipped']
                         shipped_date = self.convert_TZ_UTC(shipped_date) if shipped_date else shipped_date
