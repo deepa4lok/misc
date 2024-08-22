@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
+# Copyright (C) 2024 The Open Source Company (<https://www.tosc.nl>)
 
 import odoo
-from odoo.addons.rest_api.controllers.main import *
+from odoo.addons.rest_api.controllers import main
 from odoo.http import request
 
 import logging
@@ -10,29 +11,24 @@ _logger = logging.getLogger(__name__)
 
 def get_analytic_accountID(aa_code):
     aaObj = request.env['account.analytic.account']
-    aaID = aaObj.search(['code', '=', aa_code], limit=1)
+    aaID = aaObj.sudo().search([('code', '=', aa_code)], limit=1)
     aaID = aaID and aaID.id or False
-    # aaID = 2949
     return aaID
 
 
-def convert_values_from_jdata_to_vals(modelname, jdata, creating=True):
+def convert_values_from_jdata_to_vals1(modelname, jdata, creating=True):
     cr, uid = request.cr, request.session.uid
     Model = request.env(cr, uid)[modelname]
 
-    _logger.info('\n\n convert_values_from_jdata_to_vals overridden!!')
-
     x2m_fields = [f for f in jdata if type(jdata[f]) == list]
     f_props = Model.fields_get(x2m_fields)
-
-    _logger.info('\n\nf_props %s!!'%(f_props))
 
     vals = {}
     for field in jdata:
         val = jdata[field]
         if type(val) != list:
-            if field == 'analytic_account_code':
-                vals['analytic_account_id'] = get_analytic_accountID(val)
+            if field == 'account_analytic_code':
+                vals['account_analytic_id'] = get_analytic_accountID(val)
             else:
                 vals[field] = val
         else:
@@ -50,7 +46,10 @@ def convert_values_from_jdata_to_vals(modelname, jdata, creating=True):
             for jrec in val:
                 rec = {}
                 for f in jrec:
-                    rec[f] = jrec[f]
+                    if f == 'account_analytic_code':
+                        rec['account_analytic_id'] = get_analytic_accountID(jrec[f])
+                    else:
+                        rec[f] = jrec[f]
 
                 if field_type == 'one2many':
                     if creating:
@@ -74,6 +73,6 @@ def convert_values_from_jdata_to_vals(modelname, jdata, creating=True):
                     vals[field].append((4, rec['id']))
     return vals
 
-
-
+#Overridden:
+main.convert_values_from_jdata_to_vals = convert_values_from_jdata_to_vals1
 
