@@ -107,9 +107,9 @@
                             <page name="payload" string="Monta Payload">
                                 <field name="json_payload" readonly="True"/>
                             </page>
-                            <!--<page name="monta_response_message" string="Monta Response Message">-->
-                                <!--<field name="monta_response_message" readonly="True"/>-->
-                            <!--</page>-->
+                            <page name="monta_response_message" string="Monta Response Message">
+                                <field name="monta_response_message" readonly="True"/>
+                            </page>
                         </notebook>
                     </sheet>
                     <div class="oe_chatter">
@@ -151,35 +151,6 @@
                 </tree>
             </field>
         </record>
-
-        <record id="view_monta_filter" model="ir.ui.view">
-                <field name="name">picking.from.odooto.monta.search</field>
-                <field name="model">picking.from.odooto.monta</field>
-                <field name="arch" type="xml">
-                    <search string="Jobs">
-                        <filter name="draft_status" string="Not yet sent to Monta" domain="[('status', '=', 'draft')]"/>
-                        <filter name="successful_status" string="Successfully sent to Monta" domain="[('status', '=', 'successful')]"/>
-                        <filter name="failed_status" string="Not successfully sent to Monta" domain="[('status', '=', 'failed')]"/>
-                        <separator/>
-                        <filter name="picking_draft" string="Picking Draft" domain="[('picking_status', '=', 'draft')]"/>
-                        <filter name="picking_waiting" string="Picking Waiting" domain="[('picking_status', '=', 'waiting')]"/>
-                        <filter name="picking_confirmed" string="Picking Confirmed" domain="[('picking_status', '=', 'confirmed')]"/>
-                        <filter name="picking_assigned" string="Picking Ready" domain="[('picking_status', '=', 'assigned')]"/>
-                        <filter name="picking_done" string="Picking Done" domain="[('picking_status', '=', 'done')]"/>
-                        <filter name="picking_cancel" string="Picking Cancelled" domain="[('picking_status', '=', 'cancelled')]"/>
-                        <separator/>
-                        <filter name="no_batches" string="No Batches Received" domain="[('batches_status', '=', 'no_batches')]"/>
-                        <filter name="received_batches" string="Batches Received" domain="[('batches_status', '=', 'received')]"/>
-                        <filter name="partial_received" string="Partial Batches Received" domain="[('batches_status', '=', 'partial_received')]"/>
-                        <separator/>
-                        <group expand="0" string="Group By">
-                            <filter string="Monta Order Sent Status" name="status" domain="[]" context="{'group_by': 'status'}"/>
-                            <filter string="Picking Status" name="pick_status" domain="[]" context="{'group_by': 'picking_status'}"/>
-                            <filter string="Batches Status" name="batches_status" domain="[]" context="{'group_by': 'batches_status'}"/>
-                        </group>
-                    </search>
-                </field>
-            </record>
 
         <record model="ir.actions.act_window" id="action_monta_outbound_order">
             <field name="name">Outbound Order</field>
