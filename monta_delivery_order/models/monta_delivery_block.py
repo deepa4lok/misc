@@ -6,7 +6,6 @@ from odoo import _, fields, models, api
 
 class DeliveryBlock(models.Model):
     _name = 'monta.delivery.block'
-    _description = 'Delivery Block'
+    _description = 'Deliver Block'
 
     name = fields.Char('Delivery Block Message')
-    no_tracking = fields.Boolean('No Tracking Info')
