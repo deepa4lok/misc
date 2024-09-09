@@ -82,7 +82,7 @@ class PickingfromOdootoMonta(models.Model):
                               required=True, readonly=True, store=True, compute=_compute_response)
     monta_order_name = fields.Char(string="Monta Order Name", compute=_compute_order_name, store=True)
     message = fields.Char('Error/Exception Message')
-    picking_status = fields.Selection(related="picking_id.state", string="Picking Status")
+    picking_status = fields.Selection(related="picking_id.state", string="Picking Status", store=True)
     batches_status = fields.Selection([('no_batches', 'No Batches Received'), ('received', 'Batches Received'),
                               ('partial_received', 'Partial Batches Received')], string='Batch Status', readonly=True, store=True, compute=_compute_batch_status)
 
