@@ -107,9 +107,9 @@
                             <page name="payload" string="Monta Payload">
                                 <field name="json_payload" readonly="True"/>
                             </page>
-                            <page name="monta_response_message" string="Monta Response Message">
-                                <field name="monta_response_message" readonly="True"/>
-                            </page>
+                            <!--<page name="monta_response_message" string="Monta Response Message">-->
+                                <!--<field name="monta_response_message" readonly="True"/>-->
+                            <!--</page>-->
                         </notebook>
                     </sheet>
                     <div class="oe_chatter">

@@ -459,7 +459,7 @@ class MontaInboundtoOdooMove(models.Model):
             )
         return
 
-    def partial_validation_from_monta(self, pickObj, res):
+    def partial_validation_from_monta(self, pickObj, ctx):
         #Mostly called for incoming partial shipment
         backorderConfirmObj = self.env['stock.backorder.confirmation']
 
@@ -470,13 +470,16 @@ class MontaInboundtoOdooMove(models.Model):
             if response.status_code == 200:
                 response_data = json.loads(response.text)
                 message = "Inbound Schedular 'API inboundforecast/group' Response " + json.dumps(response_data)
-                pickObj.monta_log_id.write_response(message)
+                # pickObj.monta_log_id.write_response(message)
+                pickObj.message_post(body=message)
                 approved = [val['Approved'] for i, val in enumerate(response_data['InboundForecasts']) if not val['Approved']]
             else:
                 message = "Inbound Schedular 'API inboundforecast/group' Response "+ str(response.status_code)
-                return pickObj.monta_log_id.write_response(message)
+                # return pickObj.monta_log_id.write_response(message)
+                return pickObj.message_post(body=message)
 
         if len(approved) == 0:
+            res = pickObj.with_context(ctx).button_validate()
             if res is True:
                 return res
             ctx = res['context']
@@ -577,25 +580,24 @@ class MontaInboundtoOdooMove(models.Model):
         for pickObj in picking_obj:
             monta_obj |= pickObj.monta_log_id
             try:
+                if pickObj.monta_log_id not in update_picking_msg:
+                    update_picking_msg[pickObj.monta_log_id] = ''
                 # ctx.update({'picking_ids_not_to_backorder':pickObj.ids})
 
                 #apply backdate, if monta_create_date
                 self.apply_backdate(pickObj)
 
-                res = pickObj.with_context(ctx).button_validate()
-                if res is True:
-                    return res
-                elif pickObj.picking_type_code == 'outgoing':
+                if pickObj.picking_type_code == 'incoming':
+                    return self.partial_validation_from_monta(pickObj, ctx)
+                else:
+                    res = pickObj.with_context(ctx).button_validate()
                     return res
 
-                _logger.info(
-                    "\nWarning: Monta Outbound/Inbound scheduler after "
-                    "button_validate() proceeded with partial validation %s,\n" % (res)
-                )
-                self.partial_validation_from_monta(pickObj, res)
-
-                if pickObj.monta_log_id not in update_picking_msg:
-                    update_picking_msg[pickObj.monta_log_id] = ''
+                # _logger.info(
+                #     "\nWarning: Monta Outbound/Inbound scheduler after "
+                #     "button_validate() proceeded with partial validation %s,\n" % (res)
+                # )
+                # self.partial_validation_from_monta(pickObj, res)
 
             except Exception as e:
                 pickObj |= pickObj
