@@ -360,11 +360,13 @@ class PickingfromOdootoMonta(models.Model):
                         shipped_date = response_order_info_data['Shipped']
                         shipped_date = self.convert_TZ_UTC(shipped_date) if shipped_date else shipped_date
                         if obj.picking_id.sale_id:
-                            track_dic['Shipped'] = response_order_info_data['Shipped']
-                            track_dic['TrackAndTraceLink'] = response_order_info_data['TrackAndTraceLink']
-                            track_dic['TrackAndTraceCode'] = response_order_info_data['TrackAndTraceCode']
-                            track_dic['ShipperDescription'] = response_order_info_data['ShipperDescription']
-                            track_dic['PackingServices'] = response_order_info_data['PackingServices']
+                            if not obj.picking_id.carrier_tracking_ref \
+                                or (obj.picking_id.carrier_tracking_ref != response_order_info_data['TrackAndTraceCode']):
+                                track_dic['Shipped'] = response_order_info_data['Shipped']
+                                track_dic['TrackAndTraceLink'] = response_order_info_data['TrackAndTraceLink']
+                                track_dic['TrackAndTraceCode'] = response_order_info_data['TrackAndTraceCode']
+                                track_dic['ShipperDescription'] = response_order_info_data['ShipperDescription']
+                                track_dic['PackingServices'] = response_order_info_data['PackingServices']
 
 
                     for line in response_data.get('BatchLines', []):
