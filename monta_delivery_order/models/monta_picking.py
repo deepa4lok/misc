@@ -351,8 +351,7 @@ class PickingfromOdootoMonta(models.Model):
                     monta_delivery_block_id = obj.picking_id.sale_id.monta_delivery_block_id
                     shipped_date = False
                     if response_order_info.status_code == 200 \
-                            and (not monta_delivery_block_id or
-                                 (monta_delivery_block_id and not monta_delivery_block_id.no_tracking)):
+                            and (not monta_delivery_block_id or (monta_delivery_block_id and not monta_delivery_block_id.no_tracking)):
 
                         response_order_info_data = json.loads(response_order_info.text)
                         message += '<br/>Outbound Schedular Tracking Response: ' + json.dumps(response_order_info_data)
