@@ -589,11 +589,10 @@ class MontaInboundtoOdooMove(models.Model):
                 self.apply_backdate(pickObj)
 
                 if pickObj.picking_type_code == 'incoming':
-                    return self.partial_validation_from_monta(pickObj, ctx)
+                    self.partial_validation_from_monta(pickObj, ctx)
                 else:
-                    res = pickObj.with_context(ctx).button_validate()
-                    return res
-
+                    pickObj.with_context(ctx).button_validate()
+                    
                 # _logger.info(
                 #     "\nWarning: Monta Outbound/Inbound scheduler after "
                 #     "button_validate() proceeded with partial validation %s,\n" % (res)
