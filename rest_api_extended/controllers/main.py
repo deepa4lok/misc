@@ -16,6 +16,13 @@ def get_analytic_accountID(aa_code):
     return aaID
 
 
+def get_countryID(rc_code):
+    rcObj = request.env['res.country']
+    rcID = rcObj.sudo().search([('code', '=', rc_code)], limit=1)
+    rcID = rcID and rcID.id or False
+    return rcID
+
+
 def convert_values_from_jdata_to_vals1(modelname, jdata, creating=True):
     cr, uid = request.cr, request.session.uid
     Model = request.env(cr, uid)[modelname]
@@ -27,8 +34,12 @@ def convert_values_from_jdata_to_vals1(modelname, jdata, creating=True):
     for field in jdata:
         val = jdata[field]
         if type(val) != list:
+            # Analytic Account
             if field == 'account_analytic_code':
                 vals['account_analytic_id'] = get_analytic_accountID(val)
+            # Country
+            elif field == 'country_code':
+                vals['country_id'] = get_countryID(val)
             else:
                 vals[field] = val
         else:
@@ -46,8 +57,12 @@ def convert_values_from_jdata_to_vals1(modelname, jdata, creating=True):
             for jrec in val:
                 rec = {}
                 for f in jrec:
+                    # Analytic Account
                     if f == 'account_analytic_code':
                         rec['account_analytic_id'] = get_analytic_accountID(jrec[f])
+                    # Country
+                    elif f == 'country_code':
+                        rec['country_id'] = get_countryID(jrec[f])
                     else:
                         rec[f] = jrec[f]
 
