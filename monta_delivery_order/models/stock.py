@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api
+import json
 
 class Picking(models.Model):
     _inherit = 'stock.picking'
@@ -48,4 +49,29 @@ class Picking(models.Model):
         if self.picking_type_code in ('outgoing', 'incoming') and (self.sale_id or self.purchase_id) and not self.monta_log_id:
             self.transfer_picking_to_monta()
         return res
+
+    def open_website_url(self):
+        self.ensure_one()
+        if not self.monta_carrier_tracking_url:
+            raise UserError(_("Your delivery method has no redirect on courier provider's website to track this order."))
+
+        carrier_trackers = []
+        try:
+            carrier_trackers = json.loads(self.monta_carrier_tracking_url)
+        except ValueError:
+            carrier_trackers = self.monta_carrier_tracking_url
+        else:
+            msg = "Tracking links for shipment: <br/>"
+            for tracker in carrier_trackers:
+                msg += '<a href=' + tracker[1] + '>' + tracker[0] + '</a><br/>'
+            self.message_post(body=msg)
+            return self.env["ir.actions.actions"]._for_xml_id("delivery.act_delivery_trackers_url")
+
+        client_action = {
+            'type': 'ir.actions.act_url',
+            'name': "Shipment Tracking Page",
+            'target': 'new',
+            'url': self.monta_carrier_tracking_url,
+        }
+        return client_action
 

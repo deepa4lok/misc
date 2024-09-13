@@ -27,8 +27,8 @@
                                 <field name="monta_response_code"/>
                             </group>
                             <group col="4">
-                                <field name="planned_shipment_date"/>
-                                <field name="shipped"/>
+                                <field name="planned_shipment_date" string="Planned Date"/>
+                                <field name="shipped" string="Shipped or Received Date"/>
                                 <field name="monta_order_name" readonly="True"/>
                             </group>
                         </group>
@@ -129,8 +129,8 @@
                     <field name="partner_delivery_address_id"/>
                     <field name="partner_invoice_address_id" />
                     <field name="sale_id" password="True"/>
-                    <field name="planned_shipment_date"/>
-                    <field name="shipped"/>
+                    <field name="planned_shipment_date" string="Planned Date"/>
+                    <field name="shipped" string="Shipped or Received Date"/>
                     <field name="status" string="Sent To Monta status"/>
                     <field name="picking_status" />
                     <field name="batches_status" />
