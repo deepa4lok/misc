@@ -82,7 +82,7 @@ class PickingfromOdootoMonta(models.Model):
                               required=True, readonly=True, store=True, compute=_compute_response)
     monta_order_name = fields.Char(string="Monta Order Name", compute=_compute_order_name, store=True)
     message = fields.Char('Error/Exception Message')
-    picking_status = fields.Selection(related="picking_id.state", string="Picking Status")
+    picking_status = fields.Selection(related="picking_id.state", string="Picking Status", store=True)
     batches_status = fields.Selection([('no_batches', 'No Batches Received'), ('received', 'Batches Received'),
                               ('partial_received', 'Partial Batches Received')], string='Batch Status', readonly=True, store=True, compute=_compute_batch_status)
 
@@ -348,20 +348,24 @@ class PickingfromOdootoMonta(models.Model):
                     response_data = json.loads(response.text)
                     message = 'Outbound Schedular Batches Response: ' + json.dumps(response_data)
 
+                    monta_delivery_block_id = obj.picking_id.sale_id.monta_delivery_block_id
                     shipped_date = False
-                    if response_order_info.status_code == 200:
+                    if response_order_info.status_code == 200 \
+                            and (not monta_delivery_block_id or (monta_delivery_block_id and not monta_delivery_block_id.no_tracking)):
 
                         response_order_info_data = json.loads(response_order_info.text)
-                        message += '\nOutbound Schedular Tracking Response: ' + json.dumps(response_order_info_data)
+                        message += '<br/>Outbound Schedular Tracking Response: ' + json.dumps(response_order_info_data)
 
                         shipped_date = response_order_info_data['Shipped']
                         shipped_date = self.convert_TZ_UTC(shipped_date) if shipped_date else shipped_date
                         if obj.picking_id.sale_id:
-                            track_dic['Shipped'] = response_order_info_data['Shipped']
-                            track_dic['TrackAndTraceLink'] = response_order_info_data['TrackAndTraceLink']
-                            track_dic['TrackAndTraceCode'] = response_order_info_data['TrackAndTraceCode']
-                            track_dic['ShipperDescription'] = response_order_info_data['ShipperDescription']
-                            track_dic['PackingServices'] = response_order_info_data['PackingServices']
+                            if not obj.picking_id.carrier_tracking_ref \
+                                or (obj.picking_id.carrier_tracking_ref != response_order_info_data['TrackAndTraceCode']):
+                                track_dic['Shipped'] = response_order_info_data['Shipped']
+                                track_dic['TrackAndTraceLink'] = response_order_info_data['TrackAndTraceLink']
+                                track_dic['TrackAndTraceCode'] = response_order_info_data['TrackAndTraceCode']
+                                track_dic['ShipperDescription'] = response_order_info_data['ShipperDescription']
+                                track_dic['PackingServices'] = response_order_info_data['PackingServices']
 
 
                     for line in response_data.get('BatchLines', []):
@@ -456,7 +460,7 @@ class MontaInboundtoOdooMove(models.Model):
             )
         return
 
-    def partial_validation_from_monta(self, pickObj, res):
+    def partial_validation_from_monta(self, pickObj, ctx):
         #Mostly called for incoming partial shipment
         backorderConfirmObj = self.env['stock.backorder.confirmation']
 
@@ -467,13 +471,16 @@ class MontaInboundtoOdooMove(models.Model):
             if response.status_code == 200:
                 response_data = json.loads(response.text)
                 message = "Inbound Schedular 'API inboundforecast/group' Response " + json.dumps(response_data)
-                pickObj.monta_log_id.write_response(message)
+                # pickObj.monta_log_id.write_response(message)
+                pickObj.message_post(body=message)
                 approved = [val['Approved'] for i, val in enumerate(response_data['InboundForecasts']) if not val['Approved']]
             else:
                 message = "Inbound Schedular 'API inboundforecast/group' Response "+ str(response.status_code)
-                return pickObj.monta_log_id.write_response(message)
+                # return pickObj.monta_log_id.write_response(message)
+                return pickObj.message_post(body=message)
 
         if len(approved) == 0:
+            res = pickObj.with_context(ctx).button_validate()
             if res is True:
                 return res
             ctx = res['context']
@@ -574,25 +581,23 @@ class MontaInboundtoOdooMove(models.Model):
         for pickObj in picking_obj:
             monta_obj |= pickObj.monta_log_id
             try:
+                if pickObj.monta_log_id not in update_picking_msg:
+                    update_picking_msg[pickObj.monta_log_id] = ''
                 # ctx.update({'picking_ids_not_to_backorder':pickObj.ids})
 
                 #apply backdate, if monta_create_date
                 self.apply_backdate(pickObj)
 
-                res = pickObj.with_context(ctx).button_validate()
-                if res is True:
-                    return res
-                elif pickObj.picking_type_code == 'outgoing':
-                    return res
-
-                _logger.info(
-                    "\nWarning: Monta Outbound/Inbound scheduler after "
-                    "button_validate() proceeded with partial validation %s,\n" % (res)
-                )
-                self.partial_validation_from_monta(pickObj, res)
-
-                if pickObj.monta_log_id not in update_picking_msg:
-                    update_picking_msg[pickObj.monta_log_id] = ''
+                if pickObj.picking_type_code == 'incoming':
+                    self.partial_validation_from_monta(pickObj, ctx)
+                else:
+                    pickObj.with_context(ctx).button_validate()
+                    
+                # _logger.info(
+                #     "\nWarning: Monta Outbound/Inbound scheduler after "
+                #     "button_validate() proceeded with partial validation %s,\n" % (res)
+                # )
+                # self.partial_validation_from_monta(pickObj, res)
 
             except Exception as e:
                 pickObj |= pickObj

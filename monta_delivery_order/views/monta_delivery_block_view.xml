@@ -8,6 +8,7 @@
                 <sheet>
                     <group>
                         <field name="name" required="1"/>
+                        <field name="no_tracking"/>
                     </group>
                 </sheet>
             </form>
@@ -20,6 +21,7 @@
         <field name="arch" type="xml">
             <tree string="Delivery Block">
                 <field name="name"/>
+                <field name="no_tracking"/>
             </tree>
         </field>
     </record>
