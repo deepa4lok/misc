@@ -100,13 +100,6 @@ class PickingfromOdootoMonta(models.Model):
 
         url = config.host
 
-        # GET inboundforecast/group/
-        if 'api-v6.monta.nl' in method:
-            url = "https://api-v6.monta.nl/"
-            method = method.split(url)[1]
-        elif '/batches' in method :#only for outbound batches
-            url = "https://api-v6.monta.nl"
-
         if url.endswith("/"):
             url += method
         else:
@@ -116,9 +109,7 @@ class PickingfromOdootoMonta(models.Model):
         response = False
         try:
             response = requests.request(request, url, headers=headers, data=payload, auth=HTTPBasicAuth(user, pwd))
-            if response.status_code == 200 and \
-                    ('inbounds' in method or '/batches' in method or '/product' in method
-                     or 'api-v6.monta.nl' in url):
+            if response.status_code == 200 and 'GET' in method:
                 return response
 
             dic ={
@@ -342,7 +333,7 @@ class PickingfromOdootoMonta(models.Model):
             try:
                 orderNum = obj.monta_order_name
                 response = self.call_monta_interface("GET", method%orderNum)
-                response_order_info = self.call_monta_interface("GET", "https://api-v6.monta.nl/order/%s"%orderNum)
+                response_order_info = self.call_monta_interface("GET", "order/%s"%orderNum)
                 track_dic = {}
                 if response.status_code == 200:
                     response_data = json.loads(response.text)
@@ -466,7 +457,7 @@ class MontaInboundtoOdooMove(models.Model):
 
         approved = []
         if pickObj.picking_type_code == 'incoming':
-            method = "https://api-v6.monta.nl/inboundforecast/group/"+pickObj.monta_log_id.monta_order_name
+            method = "inboundforecast/group/"+pickObj.monta_log_id.monta_order_name
             response = self.env['picking.from.odooto.monta'].call_monta_interface("GET", method)
             if response.status_code == 200:
                 response_data = json.loads(response.text)
