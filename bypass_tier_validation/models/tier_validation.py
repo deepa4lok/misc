@@ -12,7 +12,7 @@ class TierValidation(models.AbstractModel):
         """Allow to add exceptions for fields that are allowed to be written
         even when the record is under validation."""
 
-        if self.env.user.has_group('bypass_tier_validation.group_bypass_tier_validation'):
+        if self._name == 'account.move' and self.env.user.has_group('bypass_tier_validation.group_bypass_tier_validation'):
             return True
         exceptions = self._get_under_validation_exceptions()
         for val in vals:
