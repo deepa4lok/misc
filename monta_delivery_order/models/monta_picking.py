@@ -373,7 +373,7 @@ class PickingfromOdootoMonta(models.Model):
                             batch_qty_total = 0
                             batch_ids = odoo_outbound_line.monta_outbound_batch_ids
                             batch_obj = odoo_outbound_line.monta_outbound_batch_ids.\
-                                search([('id', 'in', batch_ids.ids), 
+                                search([('id', 'in', batch_ids.ids),
                                         ('batch_id', '=', batch_id),
                                         ('batch_ref', '=', batch_ref)])
                             if batch_obj:
@@ -400,9 +400,11 @@ class PickingfromOdootoMonta(models.Model):
                                'carrier_tracking_ref':track_dic['TrackAndTraceCode']})
                 obj.write_response(message)
             except Exception as e:
+                error_message = "\nError: Monta Outbound scheduler %s\n,"%(e)
                 _logger.info(
-                    "\nError: Monta Outbound scheduler %s\n,"%(e)
+                    error_message
                 )
+                obj.picking_id.post_admin_notification(error_message)
         if odoo_outbound_lines_obj:
             self.env['monta.inboundto.odoo.move'].validate_picking_from_monta_qty(outboundMoveData=odoo_outbound_lines_obj)
 
@@ -611,6 +613,7 @@ class MontaInboundtoOdooMove(models.Model):
             monta_inbound_ids = []
             response_data = json.loads(response.text)
             for dt in response_data:
+                picking_obj = self.env['stock.picking']
                 try:
                     inboundID = dt['Id']
                     monta_inbound_ids.append(int(inboundID))
@@ -623,6 +626,7 @@ class MontaInboundtoOdooMove(models.Model):
                         [('product_id.default_code', '=', sku),
                          ('monta_move_id.monta_order_name', '=', inboundRef)])
                     if odoo_inbound_obj:
+                        picking_obj = odoo_inbound_obj.move_id.picking_id
                         message = 'Inbound Schedular Batches Response: '+json.dumps(dt)
                         odoo_inbound_obj.monta_move_id.write_response(message)
                         odoo_inbound_lines_obj |= odoo_inbound_obj
@@ -641,9 +645,11 @@ class MontaInboundtoOdooMove(models.Model):
                         self.create(inbound_data)
 
                 except Exception as e:
+                    error_message = "\nError: Monta Inbound scheduler %s,\n" % (e)
                     _logger.info(
-                        "\nError: Monta Inbound scheduler %s,\n" % (e)
+                        error_message
                     )
+                    picking_obj.post_admin_notification(error_message)
             if response_data:
                 new_inbound_id = False
                 inboundIds = [int(id) for id in self.search([]).filtered(lambda l: l.inbound_id).mapped('inbound_id')]

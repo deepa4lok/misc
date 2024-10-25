@@ -75,3 +75,17 @@ class Picking(models.Model):
         }
         return client_action
 
+    def post_admin_notification(self, msg=''):
+        #force admin id =2, else sudo will gives odoo bot
+        admin_user = self.env['res.users'].sudo().browse(2)
+        partner = admin_user.partner_id
+        
+        subject = "Error: Monta Outbound scheduler for " + self.name
+        message_obj = self.message_post(body=msg, subject=subject, message_type="notification",
+                                       subtype_xmlid="mail.mt_comment", partner_ids=partner.ids,
+                                       author_id=partner.id, notify_by_email=False)
+
+        message_obj.notification_ids = [(0, 0, {'mail_message_id': message_obj.id, 'res_partner_id': partner.id,
+                                                'notification_type': 'inbox'})]
+
+        return 
