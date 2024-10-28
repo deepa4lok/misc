@@ -404,7 +404,7 @@ class PickingfromOdootoMonta(models.Model):
                 _logger.info(
                     error_message
                 )
-                obj.picking_id.post_admin_notification(error_message)
+                obj.picking_id.post_admin_notification(error_message, 'Outbound')
         if odoo_outbound_lines_obj:
             self.env['monta.inboundto.odoo.move'].validate_picking_from_monta_qty(outboundMoveData=odoo_outbound_lines_obj)
 
@@ -649,7 +649,7 @@ class MontaInboundtoOdooMove(models.Model):
                     _logger.info(
                         error_message
                     )
-                    picking_obj.post_admin_notification(error_message)
+                    picking_obj.post_admin_notification(error_message, 'Inbound')
             if response_data:
                 new_inbound_id = False
                 inboundIds = [int(id) for id in self.search([]).filtered(lambda l: l.inbound_id).mapped('inbound_id')]
