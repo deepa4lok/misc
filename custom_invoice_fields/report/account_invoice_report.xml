@@ -1,6 +1,6 @@
 <odoo>
     <template id="report_invoice_document_inherit_custom_fields" inherit_id="account.report_invoice_document">
-            <xpath expr="//field[@name='note']" position="after">
+            <xpath expr="//field[@name='narration']" position="after">
             <div class="row mt32">
                 <div class="col-6">
                     <strong>Mileage:</strong> <span t-field="doc.mileage"/>
