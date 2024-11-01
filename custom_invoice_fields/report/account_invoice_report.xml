@@ -8,6 +8,9 @@
                 <div class="col-6">
                     <strong>License Plate:</strong> <span t-field="doc.license_plate"/>
                 </div>
+                <div class="col-6">
+                    <strong>Model:</strong> <span t-field="doc.model"/>
+                </div>
             </div>
         </xpath>
     </template>

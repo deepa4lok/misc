@@ -5,3 +5,4 @@ class AccountMove(models.Model):
 
     mileage = fields.Integer(string="Mileage")
     license_plate = fields.Char(string="License Plate")
+    model = fields.Char(string="Model")
