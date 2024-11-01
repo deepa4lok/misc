@@ -3,13 +3,13 @@
         <xpath expr="//div[@name='payment_term']" position="after">
             <div class="row mt32">
                 <div class="col-6">
-                    <strong>Mileage:</strong> <span t-field="doc.mileage"/>
+                    <strong>Mileage:</strong> <span t-field="o.mileage"/>
                 </div>
                 <div class="col-6">
-                    <strong>License Plate:</strong> <span t-field="doc.license_plate"/>
+                    <strong>License Plate:</strong> <span t-field="o.license_plate"/>
                 </div>
                 <div class="col-6">
-                    <strong>Model:</strong> <span t-field="doc.model"/>
+                    <strong>Model:</strong> <span t-field="o.model"/>
                 </div>
             </div>
         </xpath>
