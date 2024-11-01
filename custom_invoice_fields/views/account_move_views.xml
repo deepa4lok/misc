@@ -4,7 +4,7 @@
         <field name="model">account.move</field>
         <field name="inherit_id" ref="account.view_move_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='journal']" position="after">
+            <xpath expr="//field[@name='quick_edit_total_amount']" position="after">
                 <group>
                     <field name="mileage"/>
                     <field name="license_plate"/>
