@@ -391,6 +391,7 @@ class PickingfromOdootoMonta(models.Model):
                                 data.update({'monta_create_date': shipped_date})
                             # batch created
                             monta_outbond_obj.create(data)
+                    obj.write_response(message)
 
                 if obj.picking_id.sale_id and track_dic:
                     body = _('Tracking Info:\n %s', track_dic['TrackAndTraceLink'])
@@ -398,7 +399,6 @@ class PickingfromOdootoMonta(models.Model):
                     obj.picking_id.\
                         write({'monta_carrier_tracking_url':track_dic['TrackAndTraceLink'],
                                'carrier_tracking_ref':track_dic['TrackAndTraceCode']})
-                obj.write_response(message)
             except Exception as e:
                 error_message = "\nError: Monta Outbound scheduler %s\n,"%(e)
                 _logger.info(
