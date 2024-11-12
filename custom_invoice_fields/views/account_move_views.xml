@@ -1,0 +1,16 @@
+<odoo>
+    <record id="view_move_form_inherit_custom_fields" model="ir.ui.view">
+        <field name="name">account.move.form.custom.fields</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='journal']" position="after">
+                <group>
+                    <field name="mileage"/>
+                    <field name="license_plate"/>
+                    <field name="model"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>
