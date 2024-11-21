@@ -1,15 +1,13 @@
 <odoo>
     <template id="report_invoice_document_inherit_custom_fields" inherit_id="account.report_invoice_document">
-        <xpath expr="//div[@class='invoice_origin']" position="after">
+        <xpath expr="//div[@name='payment_term']" position="after">
             <div class="row mt32">
                 <div class="col-6">
-                    <strong>Mileage:</strong> <span t-field="doc.mileage"/>
-                </div>
-                <div class="col-6">
-                    <strong>License Plate:</strong> <span t-field="doc.license_plate"/>
-                </div>
-                <div class="col-6">
-                    <strong>Model:</strong> <span t-field="doc.model"/>
+                    <br></br>
+                    <strong>Mileage      :</strong> <span t-field="o.mileage"/><br></br>
+                    <strong>License Plate:</strong> <span t-field="o.license_plate"/><br></br>
+                    <strong>Model        :</strong> <span t-field="o.model"/><br></br>
+                    <br></br>
                 </div>
             </div>
         </xpath>
