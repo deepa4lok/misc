@@ -75,7 +75,7 @@ class PickingfromOdootoMonta(models.Model):
     monta_stock_move_ids = fields.One2many('stock.move.from.odooto.monta', 'monta_move_id')
     monta_response_code = fields.Integer('Monta Response')
     monta_response_message = fields.Text('Monta Response Message')
-    picking_monta_response = fields.Boolean(compute=_compute_response, default=False, store=True, string='Roularta Response')
+    picking_monta_response = fields.Boolean(compute=_compute_response, default=False, store=True, string='Monta Response')
     json_payload = fields.Text('Payload')
     client_order_ref = fields.Char(string="Customer Reference", related="picking_id.client_order_ref")
     status = fields.Selection([('draft', 'Not yet sent to Monta'), ('successful', 'Successfully sent to Monta'), ('failed', 'Not successfully sent to Monta')], string='Status',
