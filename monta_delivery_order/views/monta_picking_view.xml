@@ -162,8 +162,8 @@
                         <filter name="failed_status" string="Not successfully sent to Monta" domain="[('status', '=', 'failed')]"/>
                         <separator/>
                         <filter name="picking_draft" string="Picking Draft" domain="[('picking_status', '=', 'draft')]"/>
-                        <filter name="picking_waiting" string="Picking Waiting Another Operation" domain="[('picking_status', '=', 'waiting')]"/>
-                        <filter name="picking_confirmed" string="Picking Waiting" domain="[('picking_status', '=', 'confirmed')]"/>
+                        <filter name="picking_waiting" string="Picking Waiting" domain="[('picking_status', 'in', ('waiting', 'confirmed'))]"/>
+                        <!--<filter name="picking_confirmed" string="Picking Waiting" domain="[('picking_status', '=', 'confirmed')]"/>-->
                         <filter name="picking_assigned" string="Picking Ready" domain="[('picking_status', '=', 'assigned')]"/>
                         <filter name="picking_done" string="Picking Done" domain="[('picking_status', '=', 'done')]"/>
                         <filter name="picking_cancel" string="Picking Cancelled" domain="[('picking_status', '=', 'cancel')]"/>
