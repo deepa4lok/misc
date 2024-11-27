@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, UserError
 import datetime
 
 class Sale(models.Model):
@@ -23,6 +23,28 @@ class Sale(models.Model):
             self.commitment_date = (fields.Datetime.now() + datetime.timedelta(days=1)).date()
 
     def action_confirm(self):
+        missing_attribute = []
+        if self.partner_shipping_id :
+            if not self.partner_shipping_id.name:
+                missing_attribute.append('Name')
+            if not self.partner_shipping_id.street:
+                missing_attribute.append('Street')
+            if not self.partner_shipping_id.street_number:
+                missing_attribute.append('Street Number')
+            if not self.partner_shipping_id.zip:
+                missing_attribute.append('Zip')
+            if not self.partner_shipping_id.city:
+                missing_attribute.append('City')
+            if not self.partner_shipping_id.country_id:
+                missing_attribute.append('Country')
+            if self.partner_shipping_id.country_id and not self.partner_shipping_id.country_id.code:
+                missing_attribute.append('Country Code')
+            if not self.partner_shipping_id.email:
+                missing_attribute.append('Email')
+
+            if missing_attribute:
+                raise UserError(_('Please make sure the Delivery Address is correctly set. The following field(s) are missing: "%s". Please update the Delivery Address before confirming the order.', missing_attribute))
+
         if (self.commitment_date and self.commitment_date.date() <= fields.Datetime.now().date())\
                 or not self.commitment_date:
             self.commitment_date = (fields.Datetime.now() + datetime.timedelta(days=1)).date()

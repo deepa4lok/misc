@@ -75,7 +75,7 @@ class PickingfromOdootoMonta(models.Model):
     monta_stock_move_ids = fields.One2many('stock.move.from.odooto.monta', 'monta_move_id')
     monta_response_code = fields.Integer('Monta Response')
     monta_response_message = fields.Text('Monta Response Message')
-    picking_monta_response = fields.Boolean(compute=_compute_response, default=False, store=True, string='Roularta Response')
+    picking_monta_response = fields.Boolean(compute=_compute_response, default=False, store=True, string='Monta Response')
     json_payload = fields.Text('Payload')
     client_order_ref = fields.Char(string="Customer Reference", related="picking_id.client_order_ref")
     status = fields.Selection([('draft', 'Not yet sent to Monta'), ('successful', 'Successfully sent to Monta'), ('failed', 'Not successfully sent to Monta')], string='Status',
@@ -100,13 +100,6 @@ class PickingfromOdootoMonta(models.Model):
 
         url = config.host
 
-        # GET inboundforecast/group/
-        if 'api-v6.monta.nl' in method:
-            url = "https://api-v6.monta.nl/"
-            method = method.split(url)[1]
-        elif '/batches' in method :#only for outbound batches
-            url = "https://api-v6.monta.nl"
-
         if url.endswith("/"):
             url += method
         else:
@@ -116,9 +109,7 @@ class PickingfromOdootoMonta(models.Model):
         response = False
         try:
             response = requests.request(request, url, headers=headers, data=payload, auth=HTTPBasicAuth(user, pwd))
-            if response.status_code == 200 and \
-                    ('inbounds' in method or '/batches' in method or '/product' in method
-                     or 'api-v6.monta.nl' in url):
+            if response.status_code == 200 and 'GET' in method:
                 return response
 
             dic ={
@@ -342,7 +333,7 @@ class PickingfromOdootoMonta(models.Model):
             try:
                 orderNum = obj.monta_order_name
                 response = self.call_monta_interface("GET", method%orderNum)
-                response_order_info = self.call_monta_interface("GET", "https://api-v6.monta.nl/order/%s"%orderNum)
+                response_order_info = self.call_monta_interface("GET", "order/%s"%orderNum)
                 track_dic = {}
                 if response.status_code == 200:
                     response_data = json.loads(response.text)
@@ -382,7 +373,7 @@ class PickingfromOdootoMonta(models.Model):
                             batch_qty_total = 0
                             batch_ids = odoo_outbound_line.monta_outbound_batch_ids
                             batch_obj = odoo_outbound_line.monta_outbound_batch_ids.\
-                                search([('id', 'in', batch_ids.ids), 
+                                search([('id', 'in', batch_ids.ids),
                                         ('batch_id', '=', batch_id),
                                         ('batch_ref', '=', batch_ref)])
                             if batch_obj:
@@ -400,6 +391,7 @@ class PickingfromOdootoMonta(models.Model):
                                 data.update({'monta_create_date': shipped_date})
                             # batch created
                             monta_outbond_obj.create(data)
+                    obj.write_response(message)
 
                 if obj.picking_id.sale_id and track_dic:
                     body = _('Tracking Info:\n %s', track_dic['TrackAndTraceLink'])
@@ -407,11 +399,12 @@ class PickingfromOdootoMonta(models.Model):
                     obj.picking_id.\
                         write({'monta_carrier_tracking_url':track_dic['TrackAndTraceLink'],
                                'carrier_tracking_ref':track_dic['TrackAndTraceCode']})
-                obj.write_response(message)
             except Exception as e:
+                error_message = "\nError: Monta Outbound scheduler %s\n,"%(e)
                 _logger.info(
-                    "\nError: Monta Outbound scheduler %s\n,"%(e)
+                    error_message
                 )
+                obj.picking_id.post_admin_notification(error_message, 'Outbound')
         if odoo_outbound_lines_obj:
             self.env['monta.inboundto.odoo.move'].validate_picking_from_monta_qty(outboundMoveData=odoo_outbound_lines_obj)
 
@@ -466,7 +459,7 @@ class MontaInboundtoOdooMove(models.Model):
 
         approved = []
         if pickObj.picking_type_code == 'incoming':
-            method = "https://api-v6.monta.nl/inboundforecast/group/"+pickObj.monta_log_id.monta_order_name
+            method = "inboundforecast/group/"+pickObj.monta_log_id.monta_order_name
             response = self.env['picking.from.odooto.monta'].call_monta_interface("GET", method)
             if response.status_code == 200:
                 response_data = json.loads(response.text)
@@ -620,6 +613,7 @@ class MontaInboundtoOdooMove(models.Model):
             monta_inbound_ids = []
             response_data = json.loads(response.text)
             for dt in response_data:
+                picking_obj = self.env['stock.picking']
                 try:
                     inboundID = dt['Id']
                     monta_inbound_ids.append(int(inboundID))
@@ -632,6 +626,7 @@ class MontaInboundtoOdooMove(models.Model):
                         [('product_id.default_code', '=', sku),
                          ('monta_move_id.monta_order_name', '=', inboundRef)])
                     if odoo_inbound_obj:
+                        picking_obj = odoo_inbound_obj.move_id.picking_id
                         message = 'Inbound Schedular Batches Response: '+json.dumps(dt)
                         odoo_inbound_obj.monta_move_id.write_response(message)
                         odoo_inbound_lines_obj |= odoo_inbound_obj
@@ -650,9 +645,11 @@ class MontaInboundtoOdooMove(models.Model):
                         self.create(inbound_data)
 
                 except Exception as e:
+                    error_message = "\nError: Monta Inbound scheduler %s,\n" % (e)
                     _logger.info(
-                        "\nError: Monta Inbound scheduler %s,\n" % (e)
+                        error_message
                     )
+                    picking_obj.post_admin_notification(error_message, 'Inbound')
             if response_data:
                 new_inbound_id = False
                 inboundIds = [int(id) for id in self.search([]).filtered(lambda l: l.inbound_id).mapped('inbound_id')]
