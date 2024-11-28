@@ -3,7 +3,7 @@
 
 {
     "name": "Rest API - Extended",
-    "version": "10.0.3.0",
+    "version": "10.0.4.0",
     "author": "Deepa Venkatesh (DK), The Open Source Company (TOSC)",
     "license": "AGPL-3",
     "website": "www.tosc.nl",
