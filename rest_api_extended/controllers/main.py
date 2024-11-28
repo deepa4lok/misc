@@ -36,7 +36,10 @@ def convert_values_from_jdata_to_vals1(modelname, jdata, creating=True):
         if type(val) != list:
             # Analytic Account
             if field == 'account_analytic_code':
-                vals['account_analytic_id'] = get_analytic_accountID(val)
+                if modelname == 'sale.order':
+                    vals['project_id'] = get_analytic_accountID(val)
+                else:
+                    vals['account_analytic_id'] = get_analytic_accountID(val)
             # Country
             elif field == 'country_code':
                 vals['country_id'] = get_countryID(val)
