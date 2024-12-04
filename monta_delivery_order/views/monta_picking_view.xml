@@ -128,7 +128,8 @@
                     <field name="picking_id"/>
                     <field name="partner_delivery_address_id"/>
                     <field name="partner_invoice_address_id" />
-                    <field name="sale_id" password="True"/>
+                    <field name="sale_id" />
+                    <field name="purchase_id" />
                     <field name="planned_shipment_date" string="Planned Date"/>
                     <field name="shipped" string="Shipped or Received Date"/>
                     <field name="status" string="Sent To Monta status"/>
