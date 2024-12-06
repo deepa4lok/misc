@@ -6,13 +6,13 @@ from odoo.exceptions import ValidationError
 class accountMoveLine(models.Model):
     _inherit = 'account.move.line'
 
-    migration_remark = fields.Char('Migration Remark')
+    migration_remarks = fields.Char('Migration Remarks')
 
     def action_reconcile_manually(self):
         action = super(accountMoveLine, self).action_reconcile_manually()
         if not self:
             return action
-        self.env.cr.execute('SELECT account_id, migration_remark FROM account_move_line WHERE id IN %s GROUP BY account_id, migration_remark',
+        self.env.cr.execute('SELECT account_id, migration_remarks FROM account_move_line WHERE id IN %s GROUP BY account_id, migration_remarks',
                             [tuple(self.ids)])
 
         data = self.env.cr.dictfetchall()

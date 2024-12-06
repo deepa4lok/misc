@@ -10,7 +10,7 @@
                 position="before"
             >
                 <field
-                    name="migration_remark"
+                    name="migration_remarks"
                     optional="show"
                 />
             </xpath>
@@ -19,7 +19,7 @@
                 position="before"
             >
                 <field
-                    name="migration_remark"
+                    name="migration_remarks"
                 />
             </xpath>
             <xpath
@@ -27,7 +27,7 @@
                 position="after"
             >
                 <field
-                    name="migration_remark"
+                    name="migration_remarks"
                     optional="show"
                 />
             </xpath>
