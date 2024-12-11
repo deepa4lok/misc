@@ -1,2 +1,2 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_account_reconcile_extended_account_reconcile_extended,account_reconcile_extended.account_reconcile_extended,model_account_reconcile_extended_account_reconcile_extended,base.group_user,1,1,1,1
+access_mass_reconcile_simple_mig,mass.reconcile.simple.name.mig,model_mass_reconcile_simple_migration_remarks,account.group_account_user,1,1,1,1

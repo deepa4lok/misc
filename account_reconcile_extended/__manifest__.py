@@ -16,14 +16,14 @@
     # Check https://github.com/odoo/odoo/blob/16.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
     'category': 'Accounting',
-    'version': '16.0.0.0.0',
+    'version': '16.0.0.0.2',
 
     # any module necessary for this one to work correctly
     'depends': ['account','account_reconcile_oca'],
 
     # always loaded
     'data': [
-        # 'security/ir.model.access.csv',
+        'security/ir.model.access.csv',
         'views/account_views.xml',
         # 'views/templates.xml',
     ],

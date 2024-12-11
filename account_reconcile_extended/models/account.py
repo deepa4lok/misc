@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from odoo import models, fields, _
+from odoo import models, fields, _, api
 from odoo.exceptions import ValidationError
 
 class accountMoveLine(models.Model):
@@ -8,17 +8,21 @@ class accountMoveLine(models.Model):
 
     migration_remarks = fields.Char('Migration Remarks')
 
-    def action_reconcile_manually(self):
-        action = super(accountMoveLine, self).action_reconcile_manually()
-        if not self:
-            return action
-        self.env.cr.execute('SELECT account_id, migration_remarks FROM account_move_line WHERE id IN %s GROUP BY account_id, migration_remarks',
-                            [tuple(self.ids)])
 
-        data = self.env.cr.dictfetchall()
+class MassReconcileSimpleMigrationRemarks(models.TransientModel):
+    _name = "mass.reconcile.simple.migration_remarks"
+    _inherit = "mass.reconcile.simple"
+    _description = "Mass Reconcile Simple Reference"
 
-        if len(data) > 1:
-            raise ValidationError(
-                _("You can only reconcile journal items belonging to the same account & migration remark.")
-            )
-        return action
+    # has to be subclassed
+    # field name used as key for matching the move lines
+    _key_field = "migration_remarks"
+
+
+class AccountMassReconcileMethod(models.Model):
+    _inherit = "account.mass.reconcile.method"
+
+
+    def _selection_name(self):
+        res = super(AccountMassReconcileMethod, self)._selection_name()
+        return res + [(("mass.reconcile.simple.migration_remarks", "Simple. Amount and Migartion Remarks"))]
