@@ -4,7 +4,6 @@ import json
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 from datetime import datetime
-# from odoo.addons.queue_job.job import job, related_action # FIXME
 from odoo.addons.queue_job.exception import FailedJobError
 from dateutil.relativedelta import relativedelta
 
@@ -368,7 +367,6 @@ class AccountCutoff(models.Model):
             return action
 
     # Create account move and lines using job queue
-    # @job # FIXME: Find alternate JOB deco
     def create_move_job_queue(self, vals):
         move_obj = self.env['account.move']
         try:
