@@ -54,11 +54,12 @@ class AccountInvoice(models.Model):
         #         if 'confirmed' not in bank_list:
         #             raise UserError(_('The supplier has changed bank details which are not yet approved.'))
 
-        if self.move_type == 'in_invoice' and self.partner_bank_id:
-            # if not any(bnk.state == 'confirmed' for bnk in self.partner_id.bank_ids):
-            if self.partner_bank_id.state != 'confirmed':
-                raise UserError(_("Please approve the Bank account [ %s ] to proceed further !")
-                        % (self.partner_bank_id.display_name))
+        for case in self:
+            if case.move_type == 'in_invoice' and case.partner_bank_id:
+                # if not any(bnk.state == 'confirmed' for bnk in self.partner_id.bank_ids):
+                if case.partner_bank_id.state != 'confirmed':
+                    raise UserError(_("Please approve the Bank account [ %s ] to proceed further !")
+                            % (case.partner_bank_id.display_name))
             
                  
             
