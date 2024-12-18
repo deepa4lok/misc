@@ -22,6 +22,13 @@ def get_countryID(rc_code):
     rcID = rcID and rcID.id or False
     return rcID
 
+def get_analyticDistribution(dist_code):
+    AAdist = {}
+    for aa, v in dist_code.items():
+        aaID = get_analytic_accountID(aa)
+        AAdist.update({aaID:v})
+    return AAdist
+
 
 def convert_values_from_jdata_to_vals1(modelname, jdata, creating=True):
     cr, uid = request.cr, request.session.uid
@@ -57,9 +64,14 @@ def convert_values_from_jdata_to_vals1(modelname, jdata, creating=True):
             for jrec in val:
                 rec = {}
                 for f in jrec:
+                    # Analytic Distribution
+                    if f == 'analytic_distribution_code':
+                        rec['analytic_distribution'] = get_analyticDistribution(jrec[f])
+
                     # Analytic Account
-                    if f == 'analytic_account_code':
+                    elif f == 'analytic_account_code':
                         rec['analytic_account_id'] = get_analytic_accountID(jrec[f])
+
                     # Country
                     elif f == 'country_code':
                         rec['country_id'] = get_countryID(jrec[f])
