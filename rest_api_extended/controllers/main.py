@@ -15,7 +15,6 @@ def get_analytic_accountID(aa_code):
     aaID = aaID and aaID.id or False
     return aaID
 
-
 def get_countryID(rc_code):
     rcObj = request.env['res.country']
     rcID = rcObj.sudo().search([('code', '=', rc_code)], limit=1)
@@ -29,6 +28,11 @@ def get_analyticDistribution(dist_code):
         AAdist.update({aaID:v})
     return AAdist
 
+def get_singleAnalyticDistribution(aa_code):
+    AAdist = {}
+    aaID = get_analytic_accountID(aa_code)
+    AAdist.update({aaID:100})
+    return AAdist
 
 def convert_values_from_jdata_to_vals1(modelname, jdata, creating=True):
     cr, uid = request.cr, request.session.uid
@@ -44,6 +48,15 @@ def convert_values_from_jdata_to_vals1(modelname, jdata, creating=True):
             # Analytic Account
             if field == 'analytic_account_code':
                 vals['analytic_account_id'] = get_analytic_accountID(val)
+
+            # Analytic Distribution (Multi)
+            elif field == 'analytic_distribution_code':
+                vals['analytic_distribution'] = get_analyticDistribution(val)
+
+            # Analytic Distribution (Single)
+            elif field == 'single_analytic_code':
+                vals['analytic_distribution'] = get_singleAnalyticDistribution(val)
+
             # Country
             elif field == 'country_code':
                 vals['country_id'] = get_countryID(val)
@@ -64,9 +77,13 @@ def convert_values_from_jdata_to_vals1(modelname, jdata, creating=True):
             for jrec in val:
                 rec = {}
                 for f in jrec:
-                    # Analytic Distribution
+                    # Analytic Distribution (Multi)
                     if f == 'analytic_distribution_code':
                         rec['analytic_distribution'] = get_analyticDistribution(jrec[f])
+
+                    # Analytic Distribution (Single)
+                    elif f == 'single_analytic_code':
+                        rec['analytic_distribution'] = get_singleAnalyticDistribution(jrec[f])
 
                     # Analytic Account
                     elif f == 'analytic_account_code':
